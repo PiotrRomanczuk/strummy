@@ -1,9 +1,9 @@
 # shellcheck shell=bash
 # Gate for the dev agent — sourced by run.sh. Decides what (if anything) the
-# agent may do today, from the scheduled Nightly E2E runs and open agent PRs.
+# agent may do today, from the timer-started Nightly E2E runs and open agent PRs.
 #
-#   triage   the latest scheduled Nightly run failed → fix that first
-#   feature  the last $GREEN_STREAK scheduled runs are green, at least one of
+#   triage   the latest timer-started Nightly run failed → fix that first
+#   feature  the last $GREEN_STREAK timer-started runs are green, at least one of
 #            them ran the full device matrix, and the newest is fresh
 #   wait     anything else (streak too short, stale, or still running)
 
@@ -11,6 +11,10 @@ REPO_SLUG="${REPO_SLUG:-PiotrRomanczuk/strummy}"
 AGENT_LABEL="${AGENT_LABEL:-dev-agent}"
 GREEN_STREAK="${GREEN_STREAK:-3}"
 MAX_AGE_HOURS="${MAX_AGE_HOURS:-30}"
+# The branch the agent reads Nightly results from, works on and opens PRs into.
+# One value for all three: the Nightly tests `dev` against the dev stack, so a
+# red run is a `dev` bug, fixed on `dev` and promoted dev → test → main.
+NIGHTLY_BRANCH="${NIGHTLY_BRANCH:-dev}"
 
 # Prints the number of the open agent PR, if any (WIP limit = 1).
 open_agent_pr() {
@@ -24,11 +28,18 @@ run_legs() {
     -q '[.jobs[] | select(.name | test("Chrome|iPad|iPhone"))] | length'
 }
 
-# Completed scheduled Nightly runs, newest first: "<id> <conclusion> <createdAt>".
+# Completed timer-started Nightly runs on dev, newest first (the timers test
+# `dev` against the dev stack; before 2026-11-25 they ran on main):
+# "<id> <conclusion> <createdAt>". The uwh timers name their runs
+# "Nightly E2E · nightly|daytime · <key>" (scripts/ops/nightly-e2e/); a manual
+# dispatch is someone testing a fix and says nothing about dev. `schedule`
+# covers the runs from before the timers (2026-11-16).
 nightly_runs() {
-  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --event schedule --limit 20 \
-    --json databaseId,conclusion,status,createdAt \
-    -q '.[] | select(.status == "completed") | "\(.databaseId) \(.conclusion) \(.createdAt)"'
+  gh run list -R "$REPO_SLUG" -w nightly-e2e.yml --branch "$NIGHTLY_BRANCH" --limit 30 \
+    --json databaseId,conclusion,status,createdAt,event,displayTitle \
+    -q '.[] | select(.status == "completed")
+      | select(.event == "schedule" or (.displayTitle | test("^Nightly E2E · (nightly|daytime)")))
+      | "\(.databaseId) \(.conclusion) \(.createdAt)"'
 }
 
 # Echoes "triage <run-id>", "feature" or "wait <reason>".
@@ -63,5 +74,5 @@ nightly_mode() {
 
 # Paths whose merge has side effects beyond the app: migrations are applied to
 # production by deploy-db.yml on push to main, workflows and ops scripts run
-# with production credentials. A PR touching them never auto-merges.
+# with production credentials. A PR touching them is flagged for extra care in review.
 RISKY_PATHS_RE='^(supabase/migrations/|\.github/|scripts/ops/|scripts/e2e-remote/|vercel\.json$)'

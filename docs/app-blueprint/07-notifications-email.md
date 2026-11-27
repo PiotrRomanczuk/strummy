@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-07-27
+updated: 2026-11-15
 domain: Notifications & Email
 tables: [notification_log, notification_queue, notification_preferences, in_app_notifications]
 maturity: mixed
@@ -72,8 +72,10 @@ skipped, not bounced.
    `lib/email/smtp-client.ts` with `render-notification.ts` templates.
    - **Retry** (`retry-handler.ts`): `BACKOFF_SCHEDULE_MINUTES = [1, 5, 30, 120, 1440]` —
      max 5 attempts per `notification_log` row, then dead-letter (status `bounced`).
-   - **Bounce** (`bounce-handler.ts`): 5 consecutive bounces auto-disable **all**
-     notifications for that user; re-enable via `reenableNotificationsForUser`.
+   - **Bounces**: no automatic handling. SMTP reports a bounce by email, not to the app, so
+     nothing marks a delivered-then-bounced send or disables a failing address. The
+     `bounce-handler.ts` module that described a 5-bounce auto-disable was never called and
+     was removed 2026-11-25.
    - **Rate limits** (`rate-limiter.ts`, backed by the hourly-count RPCs): 100/hr per user,
      1000/hr system-wide — sized to stay well under Gmail's daily send cap (500 free /
      2000 Workspace).
@@ -87,17 +89,25 @@ skipped, not bounced.
    `/unsubscribe` confirmation page. Re-subscribe by toggling back on in settings.
 8. **In-app delivery** — writes an `in_app_notifications` row; the bell subscribes over Supabase
    realtime; rows expire after 30 days.
-9. **Monitoring** — `lib/services/notification-monitoring.ts` (failure rate, bounce rate, queue
-   backlog, daily admin summary) runs from the cron dispatcher.
+9. **Parent copy** — every send of `lesson_reminder_24h`, `lesson_recap`, `lesson_cancelled`
+   or `lesson_rescheduled` to a student whose `parent_id` points at an `is_parent` profile is
+   repeated for that parent (`lib/services/notification-guardian.ts`, called from
+   `sendNotification`, so queue, direct sends and DB-trigger rows all get it). The copy greets
+   the parent, names the child at the top of the email, has its own in-app wording and links to
+   the family dashboard. It follows the parent's own preferences and channel **and** the student
+   kill switch (rule 4). A child without an address of their own whose parent was reached counts
+   as delivered, so the queue does not retry. Queue retries re-send to the student only.
+10. **Monitoring** — `lib/services/notification-monitoring.ts` (failure rate, bounce rate, queue
+    backlog, daily admin summary) runs from the cron dispatcher.
 
 ## UI surfaces
 
-| Surface         | Route / component                                                                            | Status                                                           |
-| --------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Inbox feed      | `/dashboard/notifications` → `components/notifications/Notifications.tsx` | **mounted** (limit 30, mark read / mark all read)                |
-| Topbar bell     | `components/notifications/NotificationBell.tsx` (+ `useNotifications.ts`, realtime)          | **mounted** globally in the app shell                            |
-| Preferences     | `/dashboard/settings/notifications` → `components/settings/NotificationPreferences.tsx`      | **mounted** — linked from `Settings` (settings page)    |
-| Admin analytics | `app/api/admin/notification-analytics/route.ts`; `/dashboard/admin/notifications` page       | API exists; page is a "Coming soon" placeholder → **unbuilt** UI |
+| Surface         | Route / component                                                                       | Status                                                           |
+| --------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Inbox feed      | `/dashboard/notifications` → `components/notifications/Notifications.tsx`               | **mounted** (limit 30, mark read / mark all read)                |
+| Topbar bell     | `components/notifications/NotificationBell.tsx` (+ `useNotifications.ts`, realtime)     | **mounted** globally in the app shell                            |
+| Preferences     | `/dashboard/settings/notifications` → `components/settings/NotificationPreferences.tsx` | **mounted** — linked from `Settings` (settings page)             |
+| Admin analytics | `app/api/admin/notification-analytics/route.ts`; `/dashboard/admin/notifications` page  | API exists; page is a "Coming soon" placeholder → **unbuilt** UI |
 
 **Verification note (2026-07-18)**: the prior claim that `NotificationPreferences` was
 built-unmounted is **stale** — `app/dashboard/settings/notifications/page.tsx` renders it and

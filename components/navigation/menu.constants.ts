@@ -12,7 +12,9 @@ import {
   ListMusic,
   Bell,
   Zap,
-  ShieldCheck,
+  BarChart3,
+  FlaskConical,
+  Repeat,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -67,7 +69,7 @@ const CORE_LOOP_HIDDEN_ITEMS = [
 
 // Admin-flavoured; not part of the teaching loop, so hidden from teachers —
 // but an admin with nowhere to read the logs is an admin with no logs.
-const ADMIN_ONLY_ITEMS = ['logs', 'import-logs', 'data-quality'];
+const ADMIN_ONLY_ITEMS = ['logs', 'import-logs', 'repertoire-stats'];
 
 // AI surfaces are gated on the master switch, not the static list above, so the
 // sidebar items and the in-form generators toggle in lockstep.
@@ -78,10 +80,14 @@ const AI_ITEMS = ['ai', 'ai-chat'];
 // toggle together off SHOW_PRACTICE_FEATURES.
 const PRACTICE_ITEMS = ['practice'];
 
-function hideNonCore(groups: MenuGroup[], { isAdmin = false } = {}): MenuGroup[] {
+function hideNonCore(
+  groups: MenuGroup[],
+  { isAdmin = false, hasPrivateData = false } = {}
+): MenuGroup[] {
   const hidden = [
     ...CORE_LOOP_HIDDEN_ITEMS,
     ...(isAdmin ? [] : ADMIN_ONLY_ITEMS),
+    ...(isAdmin && hasPrivateData ? [] : ['lab']),
     ...(SHOW_AI_FEATURES ? [] : AI_ITEMS),
     ...(SHOW_PRACTICE_FEATURES ? [] : PRACTICE_ITEMS),
   ];
@@ -100,6 +106,7 @@ function getTeacherGroups(): MenuGroup[] {
       items: [
         { id: 'lessons', label: 'Lessons', icon: BookOpen, path: '/dashboard/lessons' },
         { id: 'songs', label: 'Songs', icon: Music, path: '/dashboard/songs' },
+        { id: 'exercises', label: 'Exercises', icon: Repeat, path: '/dashboard/exercises' },
         {
           id: 'assignments',
           label: 'Assignments',
@@ -128,11 +135,13 @@ function getTeacherGroups(): MenuGroup[] {
           path: '/dashboard/admin/import-logs',
         },
         {
-          id: 'data-quality',
-          label: 'Data Quality',
-          icon: ShieldCheck,
-          path: '/dashboard/admin/data-quality',
+          id: 'repertoire-stats',
+          label: 'Repertoire Stats',
+          icon: BarChart3,
+          path: '/dashboard/admin/repertoire-stats',
         },
+        // Local-only: the private data hub exists on the owner's Mac, never on Vercel.
+        { id: 'lab', label: 'Lab', icon: FlaskConical, path: '/dashboard/admin/lab' },
       ],
     },
     {
@@ -207,9 +216,7 @@ function getStudentGroups(): MenuGroup[] {
     },
     {
       label: 'Progress',
-      items: [
-        { id: 'practice', label: 'Practice Log', icon: Guitar, path: '/dashboard/practice' },
-      ],
+      items: [{ id: 'practice', label: 'Practice Log', icon: Guitar, path: '/dashboard/practice' }],
     },
   ];
 }
@@ -220,10 +227,18 @@ interface RoleFlags {
   isStudent: boolean;
   isParent?: boolean;
   isDemoAccount?: boolean;
+  /** The private data hub is on this machine (local dev on the owner's Mac only). */
+  hasPrivateData?: boolean;
 }
 
-export function getMenuGroups({ isAdmin, isTeacher, isStudent, isParent }: RoleFlags): MenuGroup[] {
-  if (isAdmin || isTeacher) return hideNonCore(getTeacherGroups(), { isAdmin });
+export function getMenuGroups({
+  isAdmin,
+  isTeacher,
+  isStudent,
+  isParent,
+  hasPrivateData,
+}: RoleFlags): MenuGroup[] {
+  if (isAdmin || isTeacher) return hideNonCore(getTeacherGroups(), { isAdmin, hasPrivateData });
   if (isStudent) return hideNonCore(getStudentGroups());
   // A parent's entire surface is the family dashboard (with `?child=` switching
   // between children), reached via the sidebar's standing Dashboard link. They

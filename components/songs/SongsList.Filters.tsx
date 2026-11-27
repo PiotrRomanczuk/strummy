@@ -4,9 +4,8 @@ import { getTranslations } from 'next-intl/server';
 import type { SongsListFilters, SongsListResult } from '@/lib/services/songs-list-queries';
 
 import { levelLabel } from './song-format.helpers';
-import { FilterChipRow, FilterRow } from '@/components/shared/ListFilters';
+import { FilterChipRow } from '@/components/shared/ListFilters';
 
-import { SongsListCategoryTabs } from './SongsList.CategoryTabs';
 import { SongsListFiltersDisclosure } from './SongsList.FiltersDisclosure';
 import { SongsListFiltersForm } from './SongsList.FiltersForm';
 import { SongsListSearchField } from './SongsList.SearchField';
@@ -17,24 +16,30 @@ type Props = {
   total: number;
   canCreate: boolean;
   breakdown: SongsListResult['breakdown'];
-  categories: SongsListResult['categories'];
   filters: SongsListFilters;
   canRequest: boolean;
 };
+
+// Claude Design "Song List" header buttons: one ink primary, quiet ghosts.
+const primaryButton =
+  'inline-flex items-center rounded-lg bg-[var(--ink)] px-3.5 py-2.5 font-[family-name:var(--sans)] text-[13px] font-medium text-[var(--paper)] no-underline md:py-2';
+const ghostButton =
+  'inline-flex items-center rounded-lg border border-[var(--rule)] bg-[var(--card)] px-3 py-2.5 font-[family-name:var(--sans)] text-[12.5px] text-[var(--ink-3)] no-underline md:py-[7px]';
 
 export const SongsListFiltersBar = async ({
   total,
   canCreate,
   breakdown,
-  categories,
   filters,
   canRequest,
 }: Props) => {
   const t = await getTranslations('Songs');
-  const activeCount = [filters.level, filters.key, filters.author].filter(Boolean).length;
+  const activeCount = [filters.level, filters.key, filters.author, filters.technique].filter(
+    Boolean
+  ).length;
   return (
-    <div style={{ padding: '0 0 18px' }}>
-      <div className="ui-page-head" style={{ marginBottom: 18 }}>
+    <div>
+      <div className="ui-page-head mb-4">
         <div>
           <div
             style={{
@@ -66,46 +71,17 @@ export const SongsListFiltersBar = async ({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canCreate && (
-            <Link
-              href="/dashboard/songs/new"
-              style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                background: 'var(--ink)',
-                color: 'var(--paper)',
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: 'none',
-                fontFamily: 'var(--sans)',
-              }}
-            >
+            <Link href="/dashboard/songs/new" className={primaryButton}>
               {t('newSongLink')}
             </Link>
           )}
           {canCreate && (
-            <Link
-              href="/dashboard/songs/requests"
-              style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                // Secondary, not disabled: a gray fill read as a dead button.
-                background: 'var(--card)',
-                color: 'var(--ink-2)',
-                border: '1px solid var(--rule)',
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: 'none',
-                fontFamily: 'var(--sans)',
-              }}
-            >
+            <Link href="/dashboard/songs/requests" className={ghostButton}>
               {t('pendingRequests')}
             </Link>
           )}
           {canCreate && (
-            <Link
-              href="/dashboard/songs/links"
-              className="rounded-lg border border-[var(--rule)] bg-[var(--card)] px-4 py-2.5 font-[family-name:var(--sans)] text-[13px] font-medium text-[var(--ink-2)] no-underline"
-            >
+            <Link href="/dashboard/songs/links" className={ghostButton}>
               {t('missingLinks')}
             </Link>
           )}
@@ -113,41 +89,44 @@ export const SongsListFiltersBar = async ({
         </div>
       </div>
 
-      <SongsListSearchField filters={filters} />
+      {/* One toolbar row from `md` up — search, key, author, sort — with the
+          level chips on the line below. On phones everything but the search
+          folds into the disclosure, in the original order (level, sort, form). */}
+      <div className="md:mb-4 md:flex md:flex-wrap md:items-center md:gap-x-2.5 md:gap-y-3">
+        <SongsListSearchField filters={filters} />
 
-      <SongsListFiltersDisclosure
-        label={
-          activeCount > 0 ? t('filtersToggleActive', { count: activeCount }) : t('filtersToggle')
-        }
-        activeCount={activeCount}
-      >
-        <FilterRow>
-          <FilterChipRow
-            label={t('filterLevelLabel')}
-            chips={LEVELS.map((lvl) => ({
-              key: lvl,
-              href: buildHref({ level: filters.level === lvl ? undefined : lvl }, filters),
-              label: levelLabel(lvl, t),
-              isActive: filters.level === lvl,
-              count: breakdown[lvl],
-            }))}
-          />
-          <FilterChipRow
-            align="end"
-            chips={SORTS.map((srt) => ({
-              key: srt,
-              href: buildHref({ sort: srt }, filters),
-              label: t(SORT_LABEL_KEYS[srt]),
-              isActive: filters.sort === srt,
-            }))}
-          />
-        </FilterRow>
-
-        {/* Key / author apply live (client component). */}
-        <SongsListFiltersForm filters={filters} />
-      </SongsListFiltersDisclosure>
-
-      <SongsListCategoryTabs categories={categories} total={total} filters={filters} />
+        <SongsListFiltersDisclosure
+          label={
+            activeCount > 0 ? t('filtersToggleActive', { count: activeCount }) : t('filtersToggle')
+          }
+          activeCount={activeCount}
+        >
+          {/* Key / author apply live (client component). */}
+          <SongsListFiltersForm filters={filters} />
+          <div className="max-md:order-2 md:ml-auto">
+            <FilterChipRow
+              chips={SORTS.map((srt) => ({
+                key: srt,
+                href: buildHref({ sort: srt }, filters),
+                label: t(SORT_LABEL_KEYS[srt]),
+                isActive: filters.sort === srt,
+              }))}
+            />
+          </div>
+          <div className="max-md:order-1 md:basis-full">
+            <FilterChipRow
+              label={t('filterLevelLabel')}
+              chips={LEVELS.map((lvl) => ({
+                key: lvl,
+                href: buildHref({ level: filters.level === lvl ? undefined : lvl }, filters),
+                label: levelLabel(lvl, t),
+                isActive: filters.level === lvl,
+                count: breakdown[lvl],
+              }))}
+            />
+          </div>
+        </SongsListFiltersDisclosure>
+      </div>
     </div>
   );
 };

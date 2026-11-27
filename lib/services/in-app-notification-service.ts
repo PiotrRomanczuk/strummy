@@ -8,7 +8,7 @@
  * - Polymorphic entity references
  */
 
-'use server';
+import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { NotificationType } from '@/types/notifications';
@@ -34,6 +34,11 @@ export interface CreateInAppNotificationParams {
   entityType?: string;
   entityId?: string;
   priority?: number;
+  /**
+   * Use `actionUrl` even when the entity has a detail page. A parent's copy
+   * points at the family dashboard: the lesson page is not theirs to open.
+   */
+  preferActionUrl?: boolean;
 }
 
 export interface GetUserNotificationsOptions {
@@ -64,6 +69,7 @@ export async function createInAppNotification(
     entityType,
     entityId,
     priority = 5,
+    preferActionUrl = false,
   } = params;
 
   try {
@@ -80,7 +86,9 @@ export async function createInAppNotification(
         variant,
         // Prefer a deep link to the specific record when we have an entity
         // reference; fall back to the generic action URL (e.g. a list page).
-        action_url: entityDetailUrl(entityType, entityId) ?? actionUrl,
+        action_url: preferActionUrl
+          ? actionUrl
+          : (entityDetailUrl(entityType, entityId) ?? actionUrl),
         action_label: actionLabel,
         entity_type: entityType,
         entity_id: entityId,

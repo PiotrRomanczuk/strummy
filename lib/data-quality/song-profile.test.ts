@@ -1,5 +1,6 @@
 import { scoreCollection } from './score';
-import { songQualityProfile, type SongQualityRecord } from './song-profile';
+import { songQualityProfile } from './song-profile';
+import { withChordReviewStatus, type SongQualityRecord } from './song-quality-record';
 import { normaliseSongText } from './song-checks';
 import { suggestCanonicalGenre } from './song-genres';
 
@@ -21,6 +22,8 @@ const song = (overrides: Partial<SongQualityRecord> = {}): SongQualityRecord => 
   category: 'Britpop',
   is_draft: false,
   created_at: '2026-01-01T00:00:00Z',
+  capo_fret: 0,
+  duration_ms: null,
   ...overrides,
 });
 
@@ -97,6 +100,57 @@ describe('songQualityProfile', () => {
 
   it('rejects an out-of-range tempo', () => {
     expect(failed(song({ tempo: 0 })).failedRuleIds).toContain('song.tempo');
+  });
+
+  it('fails a song whose chords conflict with the recording, only when there was a comparison', () => {
+    expect(failed(song({ chord_review_status: 'conflict' })).failedRuleIds).toEqual([
+      'song.chords-verified',
+    ]);
+    // "check": only song2logic analyze saw a difference — a hint, not a failure.
+    for (const status of ['agree', 'check', 'no_audio', null] as const) {
+      expect(failed(song({ chord_review_status: status })).score).toBe(100);
+    }
+    const noChords = song({
+      chords: null,
+      chord_review_status: 'conflict',
+      lyrics_with_chords: 'x',
+    });
+    expect(failed(noChords).failedRuleIds).not.toContain('song.chords-verified');
+  });
+});
+
+describe('withChordReviewStatus', () => {
+  const { chord_review_status: _omitted, ...row } = song();
+
+  it('flattens the embedded chord-compare row to its status', () => {
+    const record = withChordReviewStatus({
+      ...row,
+      song_analysis_sources: [{ status: 'conflict' }],
+    });
+    expect(record).toEqual({ ...row, chord_review_status: 'conflict' });
+  });
+
+  it.each([[[]], [null], [[{ status: 'maybe' }]]])('gives no status for %j', (reviews) => {
+    const record = withChordReviewStatus({ ...row, song_analysis_sources: reviews });
+    expect(record.chord_review_status).toBeNull();
+  });
+});
+
+describe('agreement with the recording', () => {
+  const marks = { tempo: 'ok', key: 'error', duration: null, chords: 'explained' } as const;
+
+  it('fails only a field that disagrees with the recording unexplained', () => {
+    const ids = failed(song({ recording: marks })).failedRuleIds;
+    expect(ids).toContain('song.key-recording');
+    expect(ids).not.toContain('song.tempo-recording');
+    expect(ids).not.toContain('song.chords-recording');
+  });
+
+  it('does not apply without an analysis or to a field the recording does not settle', () => {
+    const quality = scoreCollection(songQualityProfile, [song({ recording: null })], NOW);
+    expect(quality.fixQueue.map((rule) => rule.ruleId)).not.toContain('song.key-recording');
+    const summary = scoreCollection(songQualityProfile, [song({ recording: marks })], NOW).fixQueue;
+    expect(summary.find((rule) => rule.ruleId === 'song.duration-recording')).toBeUndefined();
   });
 });
 

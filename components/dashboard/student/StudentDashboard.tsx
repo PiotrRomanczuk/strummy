@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import { StudentActivityCard } from './StudentDashboard.Activity';
 import { StudentCountdown } from './StudentDashboard.Countdown';
 import { StudentLastLessonCard } from './StudentDashboard.LastLesson';
@@ -10,8 +12,22 @@ import { StudentRepertoireCard } from './StudentDashboard.Repertoire';
 import { StudentSongOfWeekCard } from './StudentDashboard.SongOfWeek';
 import type { StudentHomeData } from './student-home.data';
 import { StringWaves } from '../DashboardPrimitives';
+import { BillingHomeCard } from '@/components/billing/BillingHomeCard';
+import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 
-type Props = { home: StudentHomeData; now: Date; fullName: string | null; email: string };
+type Props = {
+  home: StudentHomeData;
+  now: Date;
+  fullName: string | null;
+  email: string;
+  /** Null when the teacher does not use billing — the card is then not shown. */
+  billing?: BillingSummary | null;
+};
+
+const StudentPageTitle = ({ name }: { name: string }) => {
+  const t = useTranslations('StudentHome');
+  return <h1 className="sr-only">{t('pageTitle', { name })}</h1>;
+};
 
 /**
  * Claude Design student dashboard — "what do I practice today?". Desktop: a
@@ -20,7 +36,7 @@ type Props = { home: StudentHomeData; now: Date; fullName: string | null; email:
  * mockup's compact top (countdown, set list, stat strip, recap) instead of the
  * hero, recap card and streak card; the rest is shared.
  */
-export const StudentDashboard = ({ home, now, fullName, email }: Props) => (
+export const StudentDashboard = ({ home, now, fullName, email, billing = null }: Props) => (
   <div
     className="ui-dash-page"
     style={{
@@ -32,7 +48,7 @@ export const StudentDashboard = ({ home, now, fullName, email }: Props) => (
     }}
   >
     {/* The design has no visible page title; keep one for the document outline. */}
-    <h1 className="sr-only">{greetingName(fullName, email)} · Dashboard</h1>
+    <StudentPageTitle name={greetingName(fullName, email)} />
     <DashboardMobileHeader fullName={fullName} email={email} now={now} />
     <div className="md:hidden">
       <StudentMobileTop home={home} now={now} />
@@ -57,6 +73,7 @@ export const StudentDashboard = ({ home, now, fullName, email }: Props) => (
         <StudentRepertoireCard songs={home.repertoire} agoBySong={home.agoBySong} />
       </div>
       <div className="ui-student-col">
+        {billing && <BillingHomeCard summary={billing} href="/dashboard/billing" />}
         <div className="hidden md:block">
           <StudentStreakCard streak={home.streak} />
         </div>

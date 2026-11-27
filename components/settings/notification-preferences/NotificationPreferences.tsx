@@ -23,10 +23,10 @@ import { NOTIFICATION_CATEGORY_INFO } from '@/types/notifications';
  * Main notification preferences component
  * Displays notification preferences grouped by category with toggle controls
  */
-export default function NotificationPreferences({ userId }: { userId: string }) {
+export default function NotificationPreferences({ profileId }: { profileId: string }) {
   const t = useTranslations('Settings');
   const { preferences, isLoading, error, togglePreference, toggleAll } =
-    useNotificationPreferences(userId);
+    useNotificationPreferences(profileId);
 
   if (isLoading) {
     return (

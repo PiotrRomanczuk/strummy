@@ -15,6 +15,10 @@ import {
 } from '../songs-list-queries';
 
 const mockGetSongsHandler = jest.fn();
+const mockIdsWithTechnique = jest.fn();
+jest.mock('@/lib/services/song-techniques-queries', () => ({
+  getSongIdsWithTechnique: (...args: unknown[]) => mockIdsWithTechnique(...args),
+}));
 jest.mock('@/app/api/song/handlers', () => ({
   getSongsHandler: (...args: unknown[]) => mockGetSongsHandler(...args),
 }));
@@ -24,6 +28,7 @@ type BreakdownResult = { data: unknown; error: { message: string } | null };
 type BreakdownQuery = {
   eq: (field: string, value: string) => BreakdownQuery;
   ilike: (field: string, value: string) => BreakdownQuery;
+  in: (field: string, values: string[]) => BreakdownQuery;
   range: (from: number, to: number) => BreakdownQuery;
   then: (resolve: (result: BreakdownResult) => void) => void;
 };
@@ -32,6 +37,7 @@ const mockBreakdownResult = jest.fn();
 const mockBreakdownEq = jest.fn();
 const mockBreakdownIlike = jest.fn();
 const mockBreakdownRange = jest.fn();
+const mockBreakdownIn = jest.fn();
 
 function mockMakeBreakdownQuery(): BreakdownQuery {
   const query: BreakdownQuery = {
@@ -41,6 +47,10 @@ function mockMakeBreakdownQuery(): BreakdownQuery {
     },
     ilike: (field, value) => {
       mockBreakdownIlike(field, value);
+      return query;
+    },
+    in: (field, values) => {
+      mockBreakdownIn(field, values);
       return query;
     },
     // Fixtures are small, so every test's single mocked page is already
@@ -124,6 +134,38 @@ describe('getSongsForList', () => {
     // no key/author/search filters → breakdown query untouched
     expect(mockBreakdownEq).not.toHaveBeenCalled();
     expect(mockBreakdownIlike).not.toHaveBeenCalled();
+  });
+
+  it('narrows the list and both breakdowns to the songs that have the chosen technique', async () => {
+    mockIdsWithTechnique.mockResolvedValue(['song-a', 'song-b']);
+
+    await getSongsForList(user, teacherRoles, { ...baseFilters, technique: 'slide' });
+
+    expect(mockIdsWithTechnique).toHaveBeenCalledWith(expect.anything(), 'slide');
+    expect(mockGetSongsHandler).toHaveBeenCalledWith(
+      expect.anything(),
+      user,
+      expect.anything(),
+      expect.objectContaining({ ids: ['song-a', 'song-b'] })
+    );
+    // Level counts and genre counts: one `.in` each.
+    expect(mockBreakdownIn.mock.calls).toEqual([
+      ['id', ['song-a', 'song-b']],
+      ['id', ['song-a', 'song-b']],
+    ]);
+  });
+
+  it('asks for no ids and adds no id filter without a technique', async () => {
+    await getSongsForList(user, teacherRoles, baseFilters);
+
+    expect(mockIdsWithTechnique).not.toHaveBeenCalled();
+    expect(mockBreakdownIn).not.toHaveBeenCalled();
+    expect(mockGetSongsHandler).toHaveBeenCalledWith(
+      expect.anything(),
+      user,
+      expect.anything(),
+      expect.objectContaining({ ids: undefined })
+    );
   });
 
   it('maps sort=title to title asc', async () => {

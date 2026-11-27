@@ -15,6 +15,7 @@
     "settings": "Settings",
     "lessons": "Lessons",
     "songs": "Songs",
+    "exercises": "Exercises",
     "assignments": "Assignments",
     "theory": "Theory",
     "students": "Students",
@@ -38,7 +39,8 @@
     "my-stats": "My Stats",
     "practice": "Practice Log",
     "import-logs": "Import Logs",
-    "data-quality": "Data Quality",
+    "repertoire-stats": "Repertoire Stats",
+    "lab": "Lab",
     "groups": {
       "teaching": "Teaching",
       "students": "Students",
@@ -119,6 +121,7 @@
     "teacherFallback": "Teacher",
     "untitledLesson": "Untitled lesson",
     "statusOverdue": "Overdue",
+    "statusAwaitingConfirmation": "Awaiting confirmation",
     "statusScheduled": "Scheduled",
     "statusInProgress": "In progress",
     "statusCompleted": "Completed",
@@ -322,6 +325,9 @@
     "pendingRequests": "Pending Requests",
     "pendingRequestsTitle": "Pending Song Requests",
     "noPendingRequests": "No pending requests.",
+    "requestByArtist": "by {artist}",
+    "requestedBy": "Requested by",
+    "requestUnknownStudent": "Unknown student",
     "missingLinks": "Missing links",
     "linksTitle": "Songs without a recording",
     "linksIntro": "These songs have no YouTube link, so they cannot be analysed for tempo and chords. Find the right video, paste its link, or file the entry as an exercise or other if it has no recording.",
@@ -424,6 +430,29 @@
     "filterCategoryLabel": "Category",
     "filterAnyOption": "Any",
     "filterByKeyAria": "Filter by key",
+    "techniquesEyebrow": "Techniques",
+    "techniquesTitle": "Techniques in the song",
+    "techniquesNote": "Counted from a tablature of the song; a hint, not a transcription.",
+    "techniqueStrength": {
+      "little": "a little",
+      "regular": "regular",
+      "lot": "a lot"
+    },
+    "techniqueName": {
+      "hammer_pull": "Hammer-ons and pull-offs",
+      "slide": "Slides",
+      "bend": "Bends",
+      "vibrato": "Vibrato",
+      "let_ring": "Let ring (arpeggio)",
+      "dead_note": "Muted notes",
+      "palm_mute": "Palm mute",
+      "harmonic": "Harmonics",
+      "tapping": "Tapping",
+      "tuplet": "Triplets"
+    },
+    "filterTechniqueLabel": "Technique",
+    "filterByTechniqueAria": "Filter by technique",
+    "filterAnyTechniqueOption": "Any technique",
     "authorPlaceholder": "Author…",
     "filterByAuthorAria": "Filter by author",
     "searchPlaceholder": "Search by title…",
@@ -482,6 +511,9 @@
     "chordsTitle": "Chords",
     "noChordChart": "No chord chart on file yet.",
     "chordsInTitlePrefix": "Chords in",
+    "chordsNewForYou": "New for you: {shapes}",
+    "chordsAllKnown": "You already know every shape in this song from other songs.",
+    "chordsMapLink": "Chord map →",
     "lyricsEyebrow": "Lyrics & chords",
     "lyricsTitle": "Lyrics",
     "notesEyebrow": "From the studio",
@@ -734,6 +766,102 @@
     "tabsEyebrow": "Tablature",
     "tabsTitle": "Tabs",
     "formKeyUnknown": "Don't know yet",
+    "chordSourcesEyebrow": "Chord sources",
+    "chordSourcesStatus": {
+      "agree": "Chords match the recording",
+      "check": "Worth a look",
+      "conflict": "Chords disagree with the recording",
+      "no_sheet": "No chords in Strummy yet"
+    },
+    "chordSourcesReference": {
+      "chord-id": "Compared with Logic Pro's Chord ID on the recording.",
+      "analyze": "Compared with song2logic's analysis of the recording. It often confuses major and minor, so the differences below are hints."
+    },
+    "chordSourcesSheet": "In Strummy",
+    "chordSourcesHeard": "In the recording",
+    "chordSourcesKind": {
+      "mode": "major/minor",
+      "relative": "relative chord",
+      "missing_in_sheet": "heard, not written",
+      "not_heard": "written, not heard"
+    },
+    "chordSourcesAt": "from {time}",
+    "chordSourcesShare": "{percent}% of the song",
+    "chordSourcesConfirmed": "confirmed by Chord ID",
+    "chordSourcesUnconfirmed": "to check",
+    "chordSourcesVote": {
+      "analyze": "analysis: {side}",
+      "chordonomicon": "Ultimate Guitar: {side}"
+    },
+    "chordSourcesSide": {
+      "audio": "with the recording",
+      "sheet": "with Strummy",
+      "both": "has both",
+      "neither": "has neither"
+    },
+    "chordSourcesCapo": "The chords sound like the recording with a capo on fret {fret}. Add it to the song?",
+    "chordSourcesKey": "Sounding key: {key}",
+    "chordSourcesEdit": "Edit chords",
+    "transcriptionEyebrow": "Transcription",
+    "transcriptionTitle": "Bass line & melody",
+    "transcriptionMachine": "Machine transcription of the recording — it can be wrong; check by ear.",
+    "transcriptionTracks": "Track",
+    "transcriptionBass": "Bass",
+    "transcriptionVocals": "Vocals",
+    "transcriptionBars": "Bars {from}–{to} of {total}",
+    "transcriptionPrevious": "Previous bars",
+    "transcriptionNext": "Next bars",
+    "transcriptionRollLabel": "{track}: notes in bars {from}–{to} of {total}",
+    "transcriptionSource": "Transcribed recording ({date})",
+    "mapEyebrow": "Song map",
+    "mapTitle": "Parts, chords and groove",
+    "mapMachine": "Machine analysis of the recording — it can be wrong; check by ear.",
+    "mapTempo": "{bpm} BPM",
+    "mapTempoFelt": "{bpm} BPM (felt at {felt})",
+    "mapKeyMajor": "{tonic} major",
+    "mapKeyMinor": "{tonic} minor",
+    "mapPartCount": "{count, plural, one {# part} other {# parts}}",
+    "mapParts": "Parts of the song",
+    "mapPartLabel": "{n}. {name}, {bars, plural, one {# bar} other {# bars}}",
+    "mapPartBars": "{bars, plural, one {# bar} other {# bars}}",
+    "mapPartLoop": "loop of {bars, plural, one {# bar} other {# bars}} × {times}",
+    "mapPartSung": "sung",
+    "mapPartInstrumental": "no vocals",
+    "mapPartRepeat": "repeats part {n}",
+    "mapNameIntro": "Intro",
+    "mapNameVerse": "Verse",
+    "mapNameChorus": "Chorus",
+    "mapNameBridge": "Bridge",
+    "mapNameSolo": "Solo",
+    "mapNameInst": "Instrumental",
+    "mapNameBreak": "Break",
+    "mapNameOutro": "Outro",
+    "mapChords": "Chords",
+    "mapDrums": "Drums",
+    "mapNoDrums": "No drums in this part.",
+    "mapDrumKick": "Kick",
+    "mapDrumSnare": "Snare",
+    "mapDrumHiHat": "Hi-hat",
+    "mapDrumRide": "Ride",
+    "mapDrumToms": "Toms",
+    "mapDrumCrash": "Crash",
+    "mapKickFour": "kick on every beat",
+    "mapKickOneThree": "kick on 1 and 3",
+    "mapKickSyncopated": "syncopated kick",
+    "mapSnareBackbeat": "snare on 2 and 4",
+    "mapSnareBackbeatBusy": "snare on 2 and 4 with syncopation",
+    "mapSnareHalfTime": "snare on 3 (half-time)",
+    "mapSnareFour": "snare on every beat",
+    "mapSnareOther": "irregular snare",
+    "mapCymbalQuarters": "{drum} in quarters",
+    "mapCymbalEighths": "{drum} in eighths",
+    "mapCymbalSixteenths": "{drum} in sixteenths",
+    "mapBass": "Bass riff",
+    "mapBassLane": "Bass",
+    "mapNoBass": "No bass in this part.",
+    "mapBassShare": "An average bar of this part plays {percent}% of this riff.",
+    "mapBassRhythmOnly": "Only the rhythm: an average bar plays {percent}% of the riff, too little to name its notes.",
+    "mapSource": "Analysed recording ({date})",
     "harmonyEyebrow": "Theory",
     "harmonyTitle": "What the harmony is doing",
     "harmonyKey": "Key of the shapes: {key}.",
@@ -899,6 +1027,7 @@
     "detailMessageLabel": "Message",
     "detailScheduleLessonLink": "Schedule lesson",
     "detailImportSongsLink": "Import songs",
+    "detailChordMapLink": "Chord map",
     "detailJoinedLabel": "Student · joined {date}",
     "detailStatSongsInProgress": "Songs in progress",
     "detailStatMastered": "Mastered",
@@ -960,9 +1089,9 @@
     "createFormTitleLead": "Add a",
     "createFormTitleNoun": "student",
     "detailTileStreak": "Practice streak",
-    "detailTileDays": "days",
+    "detailTileDays": "{count, plural, one {day} other {days}}",
     "detailTileLastPracticed": "Last practiced",
-    "detailTileDaysAgo": "days ago",
+    "detailTileDaysAgo": "{count, plural, one {day ago} other {days ago}}",
     "detailTileNoPracticeYet": "no practice yet",
     "detailTileAttendance": "Attendance",
     "detailTileLastN": "last {count}",
@@ -973,7 +1102,7 @@
     "detailBreadcrumbStudents": "Students",
     "detailSince": "Since {date}",
     "detailNeedsAttention": "Needs attention",
-    "detailBannerNoPractice": "Hasn't logged practice in {days} days.",
+    "detailBannerNoPractice": "Hasn't logged practice in {days, plural, one {# day} other {# days}}.",
     "detailStudentFallback": "Student",
     "detailPracticeMinutes": "Practice minutes",
     "detailVsPrior": "{pct} vs prior",
@@ -1001,8 +1130,33 @@
       "song-harmony": {
         "name": "Theory on the song page",
         "hint": "Key, chord degrees and progression on every song."
+      },
+      "chord-map": {
+        "name": "Chord map",
+        "hint": "Which songs the student plays today and which shape opens the next ones."
       }
-    }
+    },
+    "detailTabBilling": "Billing",
+    "parentEyebrow": "Family",
+    "parentTitle": "Parent or guardian",
+    "parentHint": "The parent gets an invite to Strummy: they will see their child's lessons and notes and get lesson notifications.",
+    "parentNameLabel": "Parent's full name",
+    "parentEmailLabel": "Parent's email",
+    "parentInvite": "Invite parent",
+    "parentInvited": "Invite sent.",
+    "parentUnlinked": "Parent unlinked.",
+    "parentResend": "Send the invite again",
+    "parentUnlink": "Unlink",
+    "parentInviteFailed": "Parent linked, but the invite failed: {reason}",
+    "parentStatus": {
+      "active": "Uses Strummy",
+      "invited": "Invited",
+      "not_invited": "Not invited"
+    },
+    "parentErrorTaken": "This address already belongs to a student or a teacher.",
+    "parentErrorOwnEmail": "That is the student's own address — enter the parent's email.",
+    "parentErrorInvalid": "Check the name and email address.",
+    "parentErrorGeneric": "Could not save. Try again."
   },
   "Validation": {
     "emailInvalid": "Valid email is required",
@@ -1045,7 +1199,6 @@
       "features": "Features",
       "howItWorks": "How it works",
       "forTeachers": "For teachers",
-      "changelog": "Changelog",
       "signIn": "Sign in",
       "tryTheDemo": "Try the demo",
       "getStarted": "See the demo",
@@ -1250,7 +1403,6 @@
       "legalTitle": "Legal",
       "features": "Features",
       "howItWorks": "How it works",
-      "changelog": "Changelog",
       "forTeachers": "For teachers",
       "signIn": "Sign in",
       "createAccount": "For teachers",
@@ -1258,6 +1410,48 @@
       "privacyPolicy": "Privacy Policy",
       "copyright": "© 2026 Strummy · Public beta"
     }
+  },
+  "BetaNotice": {
+    "metaTitle": "Beta notice — Strummy",
+    "metaDescription": "What public beta means, what Strummy stores, and how to have it deleted.",
+    "back": "← Strummy",
+    "title": "Beta notice",
+    "intro": "Plain-language answers to what Strummy is, what it keeps, and how to get your records back or removed.",
+    "meaning": {
+      "heading": "What \"public beta\" means here",
+      "p1": "Strummy is built and run by one working guitar teacher, and it is used in a real teaching studio every week. It is not a finished commercial product. Features change, occasionally break, and are sometimes removed.",
+      "p2": "Everything is free during the beta. There is no card on file and no feature gating. If paid tiers arrive, teachers already using a feature keep access to it.",
+      "p3": "There is no uptime guarantee. Treat Strummy as the convenient copy of your teaching records, not the only copy."
+    },
+    "stored": {
+      "heading": "What is stored",
+      "p1": "Account details: your name, email address, and role (teacher, student, parent, admin).",
+      "p2": "Teaching records: lessons and their notes, assignments, song repertoire and progress, practice logs, and — if you connect it — lesson events synced from your Google Calendar.",
+      "p3": "Operational records: sign-in events and an audit trail of changes to lessons, assignments and profiles, kept so problems can be diagnosed.",
+      "p4": "Text you send to the AI assistant, along with the reply, so the output can be reviewed later. Do not paste anything into it you would not want stored."
+    },
+    "where": {
+      "heading": "Where it is stored",
+      "p1": "On a self-hosted PostgreSQL database on hardware in Warsaw, Poland, reached over an encrypted tunnel. The web application runs on Vercel. Nightly encrypted backups are kept off-site.",
+      "p2": "Data is not sold, and it is not shared with anyone beyond the infrastructure providers named above."
+    },
+    "minors": {
+      "heading": "Students under 18",
+      "p1": "A student account is created by their teacher, by invitation. If the student is a minor, the teacher is responsible for obtaining parental consent before entering that student’s details.",
+      "p2": "A parent can ask for their child’s records at any time using the address below, and they will be exported or deleted."
+    },
+    "delete": {
+      "heading": "Getting your data out, or deleted",
+      "p1": "Email {contact} and say which you want. An export comes back as a readable file; a deletion removes your account and the records attached to it, and cannot be undone.",
+      "p2": "Either request is handled by a person, usually within a few days — there is no automated self-service flow for this yet."
+    },
+    "questions": "Questions about any of this go to <mail>{contact}</mail>."
+  },
+  "AuthCodeError": {
+    "eyebrow": "Sign-in",
+    "title": "That sign-in link didn't work",
+    "subtitle": "The link may have expired or already been used. Go back to sign in and try again.",
+    "backToSignIn": "Back to sign in"
   },
   "Calendar": {
     "webhookTitle": "Real-time Sync",
@@ -1517,6 +1711,7 @@
     "listTabCompleted": "Completed",
     "listTabCancelled": "Cancelled",
     "listRowUpdated": "last {when}",
+    "listRowUpdatedAgo": "{days, plural, =0 {today} other {#d ago}}",
     "listEmptyTab": "Nothing in this bucket right now.",
     "quickAssignEyebrow": "Quick assign",
     "quickAssignTitle": "New assignment",
@@ -1541,8 +1736,33 @@
     "studentPickOne": "Pick an assignment on the left.",
     "detailViewHistory": "View history"
   },
+  "ChordMap": {
+    "eyebrow": "Chord map",
+    "title": "What you play today, and what's next",
+    "titleStaff": "Chord map: {name}",
+    "lead": "Shapes come from {songs, plural, one {# song} other {# songs}} in lessons and repertoire. Click a shape to see what would change — nothing is saved.",
+    "leadNoSongs": "No song with written chords has come up in lessons yet. Mark the shapes you know and the map counts the rest.",
+    "playableLabel": "{count, plural, one {song you can play today} other {songs you can play today}}",
+    "summaryLine": "you know {known, plural, one {# shape} other {# shapes}} · {total} in the catalogue",
+    "whatIf": "You're trying “what if” — these changes are not saved.",
+    "reset": "Start over",
+    "tilesTitle": "Shapes in the catalogue",
+    "tilesHint": "Click a shape to mark it known or not.",
+    "tileSongs": "in {count, plural, one {# song} other {# songs}}",
+    "tileKnown": "known",
+    "tileGain": "+{count} at once",
+    "nextTitle": "Next shape",
+    "nextHint": "How many songs open up when you learn one new shape.",
+    "nextEmpty": "No single shape opens a new song right now.",
+    "nextGain": "+{count}",
+    "songsPlayable": "Playable today",
+    "songsUnlocked": "{shape} opens",
+    "songsEmpty": "Nothing yet — start with a shape from the ranking.",
+    "showAll": "Show all ({count})"
+  },
   "Repertoire": {
     "pageTitle": "Repertoire",
+    "chordMapLink": "Chord map →",
     "subtitleSingular": "{count} song in your repertoire",
     "subtitlePlural": "{count} songs in your repertoire",
     "emptyState": "Your repertoire is empty. Songs appear here as your teacher assigns them, or you can add them yourself from the library.",
@@ -1602,8 +1822,16 @@
     "courseListCountAvailable": "{count, plural, one {# course available} other {# courses available}}",
     "courseListCountSubtitle": "{count, plural, one {# course} other {# courses}}",
     "courseListNewCourseButton": "New course",
+    "courseDetailPublished": "Published",
+    "courseDetailDraft": "Draft",
+    "courseDetailEditButton": "Edit",
+    "courseDetailAddChapterButton": "Chapter",
+    "courseDetailNoChapters": "No chapters yet.",
+    "courseDetailAddFirstChapter": "Add first chapter",
+    "lessonFormNewTitle": "New chapter",
+    "lessonFormEditTitle": "Edit chapter",
     "courseListEmptyStaff": "Create your first theory course for students.",
-    "courseListEmptyStudent": "No courses available yet. Check back soon!",
+    "courseListEmptyStudent": "No courses shared with you yet. Your teacher adds you to a course when it fits your lessons — ask them if you would like one.",
     "levelStarter": "Starter",
     "levelBeginner": "Beginner",
     "levelIntermediate": "Intermediate",
@@ -1792,6 +2020,96 @@
     "listTimeDaySingular": "day",
     "listTimeDayPlural": "days",
     "listTimeDaysAgo": "{count}d ago",
+    "content": {
+      "lesson_reminder_24h": {
+        "title": "Lesson Tomorrow",
+        "body": "You have a lesson at {time}",
+        "bodyNoValue": "You have a lesson at your scheduled time"
+      },
+      "lesson_recap": {
+        "title": "Lesson Recap",
+        "body": "Recap from your lesson: {lesson}"
+      },
+      "lesson_cancelled": {
+        "title": "Lesson Cancelled",
+        "body": "Your lesson on {date} has been cancelled",
+        "bodyNoValue": "Your lesson has been cancelled"
+      },
+      "lesson_rescheduled": {
+        "title": "Lesson Rescheduled",
+        "body": "Your lesson has been moved to {date}",
+        "bodyNoValue": "Your lesson has been moved to a new time"
+      },
+      "assignment_created": {
+        "title": "New Assignment",
+        "body": "\"{assignment}\" due {due}",
+        "bodyNoValue": "\"{assignment}\" due soon"
+      },
+      "assignment_due_reminder": {
+        "title": "Assignment Due Soon",
+        "body": "\"{assignment}\" is due {due}",
+        "bodyNoValue": "\"{assignment}\" is due soon"
+      },
+      "assignment_overdue_alert": {
+        "title": "Assignment Overdue",
+        "body": "\"{assignment}\" is overdue by {count, plural, one {# day} other {# days}}"
+      },
+      "assignment_completed": {
+        "title": "Assignment Completed",
+        "body": "{student} completed \"{assignment}\""
+      },
+      "song_mastery_achievement": {
+        "title": "Song Mastered!",
+        "body": "You mastered \"{song}\" by {artist}! 🎉"
+      },
+      "milestone_reached": {
+        "title": "Milestone Reached!",
+        "body": "You reached: {milestone}!"
+      },
+      "student_welcome": {
+        "title": "Welcome!",
+        "body": "Welcome to Strummy, {name}!"
+      },
+      "trial_ending_reminder": {
+        "title": "Trial Ending Soon",
+        "body": "Your trial period ends {when}"
+      },
+      "teacher_daily_summary": {
+        "title": "Daily Summary",
+        "body": "{count, plural, one {# lesson} other {# lessons}} completed today"
+      },
+      "weekly_progress_digest": {
+        "title": "Weekly Progress",
+        "body": "{lessons, plural, one {# lesson} other {# lessons}}, {songs, plural, one {# song} other {# songs}} mastered this week"
+      },
+      "calendar_conflict_alert": {
+        "title": "Calendar Conflict",
+        "body": "You have a scheduling conflict on {date}"
+      },
+      "webhook_expiration_notice": {
+        "title": "Integration Expiring",
+        "body": "Your {integration} expires {when}"
+      },
+      "admin_error_alert": {
+        "title": "System Error",
+        "body": "Error: {error}"
+      },
+      "actions": {
+        "viewLesson": "View Lesson",
+        "viewDetails": "View Details",
+        "viewNewTime": "View New Time",
+        "viewAssignment": "View Assignment",
+        "completeNow": "Complete Now",
+        "viewProgress": "View Progress",
+        "viewDashboard": "View Dashboard",
+        "getStarted": "Get Started",
+        "upgradeNow": "Upgrade Now",
+        "viewSummary": "View Summary",
+        "resolveConflict": "Resolve Conflict",
+        "renewNow": "Renew Now",
+        "viewLogs": "View Logs"
+      }
+    },
     "activityTitle": "Activity",
     "filterAll": "All",
     "filterLessons": "Lessons",
@@ -1815,6 +2133,8 @@
     "fieldDisplayNamePlaceholder": "Your name",
     "fieldPhone": "Phone",
     "fieldPhonePlaceholder": "+1 555 123 4567",
+    "fieldLanguage": "Language",
+    "fieldLanguageHint": "Used across the app and in the e-mails Strummy sends you.",
     "fieldAvatar": "Avatar",
     "savedConfirmation": "Saved",
     "saveButtonSaving": "Saving…",
@@ -1829,7 +2149,7 @@
     "avatarInvalidFileFallback": "Invalid file",
     "avatarUploadFailedFallback": "Upload failed",
     "apiKeysTitle": "API Keys",
-    "apiKeysDescription": "Manage your API keys for programmatic access to the Guitar CRM API.",
+    "apiKeysDescription": "Manage your API keys for programmatic access to the Strummy API.",
     "apiKeysFetchError": "Failed to fetch API keys",
     "apiKeysNameRequired": "Key name is required",
     "apiKeysCreateError": "Failed to create API key",
@@ -1950,7 +2270,10 @@
     "statusConnected": "Connected",
     "statusBuiltIn": "Built in",
     "connect": "Connect",
-    "disconnect": "Disconnect"
+    "disconnect": "Disconnect",
+    "tabBilling": "Payments",
+    "tabBillingSub": "Price list, rules",
+    "billingSub": "Set the price list for lesson packages and the day from which held lessons are counted."
   },
   "AI": {
     "suggestedPromptCreatePracticePlan": "Create a practice plan",
@@ -1966,6 +2289,53 @@
     "assistantNewConversationAriaLabel": "New conversation",
     "assistantNewConversationButton": "New Conversation",
     "assistantEmptyConversations": "No conversations yet. Start a new one!",
+    "pageAssistantTitle": "AI Assistant",
+    "pageAssistantIntro": "Generate student emails, analyse progress, and surface business insights. Every output is recorded in <link>AI History</link>.",
+    "pageChatTitle": "AI Chat",
+    "pageHistoryTitle": "AI Generation History",
+    "pageHistoryIntro": "Every AI output — lesson notes, post-lesson summaries, assignments, email drafts, song notes, insights and chat — with the model and provider used. Star or delete entries.",
+    "assistButtonDefault": "AI Assist",
+    "assistButtonConnecting": "Connecting...",
+    "assistButtonStreaming": "Streaming...",
+    "assistButtonComplete": "Complete",
+    "assistButtonWorking": "Working...",
+    "chatWelcome": "Hi! I'm your Strummy AI assistant. Ask me about practice plans, music theory, lesson planning, or student management.",
+    "chatStreamError": "Sorry — I couldn't answer that. The AI service returned an error. Please try again in a moment.",
+    "chatEmptyReply": "Sorry — the AI service didn't return a response. Please try again in a moment; if it keeps happening, check the AI provider configuration and account balance.",
+    "chatStartFailed": "Could not start a conversation. Please try again in a moment.",
+    "fieldStudent": "Student",
+    "fieldStudentPlaceholder": "Select a student",
+    "progressTitle": "AI Progress Insights",
+    "progressDescription": "Get detailed AI analysis of student learning patterns and progress",
+    "progressPeriodLabel": "Time Period",
+    "progressPeriodLast30": "Last 30 days",
+    "progressPeriodLast90": "Last 90 days",
+    "progressPeriodAll": "All time",
+    "progressAnalyze": "Analyze Progress",
+    "progressResultLabel": "AI Insights:",
+    "progressSelectHint": "Select a student to analyze their learning progress with AI",
+    "progressError": "An error occurred while analyzing progress.",
+    "emailTitle": "AI Email Draft Generator",
+    "emailDescription": "Generate personalized emails for students using AI",
+    "emailTypeLabel": "Email Type",
+    "emailTypeLessonReminder": "Lesson Reminder",
+    "emailTypeProgressReport": "Progress Report",
+    "emailTypePaymentReminder": "Payment Reminder",
+    "emailTypeMilestoneCelebration": "Milestone Celebration",
+    "emailLessonDate": "Lesson Date",
+    "emailLessonTime": "Lesson Time",
+    "emailSongsToPractice": "Songs to Practice",
+    "emailAmountDue": "Amount Due",
+    "emailAmountPlaceholder": "$100",
+    "emailAchievement": "Achievement",
+    "emailAchievementPlaceholder": "Completed first song",
+    "emailGenerate": "Generate Email Draft",
+    "emailGenerated": "Generated Email:",
+    "emailCopy": "Copy",
+    "emailCopied": "Copied!",
+    "emailSend": "Send",
+    "emailSubject": "Subject:",
+    "emailBody": "Body:",
     "chatBubbleAssistantLabel": "Strummy AI",
     "chatBubbleFeedbackThanks": "Thanks for the feedback",
     "chatBubbleFeedbackHelpfulAriaLabel": "This response was helpful",
@@ -2027,6 +2397,8 @@
     "generationTypeChat": "Chat"
   },
   "Dashboard": {
+    "forbiddenNotice": "You don't have access to that page. You're back on your dashboard.",
+    "forbiddenNoticeDismiss": "Dismiss",
     "songOfTheWeek": "Song of the Week",
     "songByAuthor": "by {author}",
     "viewSong": "View Song",
@@ -2364,6 +2736,9 @@
     "todaysPractice": "Today's practice",
     "setSummary": "{minutes} min · {count, plural, one {# piece} other {# pieces}}",
     "todayProgress": "{done}/{goal} min",
+    "todayProgressNoGoal": "{done} min",
+    "pageTitle": "{name} · Dashboard",
+    "weekdayInitials": "M,T,W,T,F,S,S",
     "key": "Key",
     "teacherNote": "{name}'s note:",
     "teacherFallback": "Your teacher",
@@ -2385,8 +2760,8 @@
     "emptyRepertoire": "No songs yet. Your teacher adds them from the song library.",
     "emptyFilter": "No songs at this stage.",
     "streak": "Streak",
-    "days": "days",
-    "nextBadge": "{remaining} more days to your",
+    "days": "{count, plural, one {day} other {days}}",
+    "nextBadge": "{remaining, plural, one {# more day} other {# more days}} to your",
     "badgeName": "{target}-day badge",
     "activity": "Activity",
     "actAssigned": "{name} assigned",
@@ -2546,7 +2921,7 @@
     "sentTo": "We sent a password reset link to",
     "whatNext": "What happens next",
     "step1": "Open the email from <b>Strummy</b>",
-    "step2": "Click <em>“Reset password”</em>",
+    "step2": "Click the <em>link or button</em> in that email",
     "step3": "Choose a new password — you'll land back here, signed in.",
     "useDifferentEmail": "← Use a different email",
     "sendingShort": "Sending…",
@@ -2557,7 +2932,9 @@
     "verifyingInvite": "Verifying your invite…",
     "inviteExpired": "This invitation link has expired. Please ask your teacher to send a new invite.",
     "inviteInvalid": "This invitation link appears to be invalid or expired.",
-    "createNewAccount": "Create a new account",
+    "inviteAskTeacher": "Ask your teacher to send you a new invitation.",
+    "inviteSignInPrompt": "Already set a password?",
+    "inviteSignInLink": "Sign in",
     "createPassword": "Create Password",
     "confirmPassword": "Confirm Password",
     "settingUp": "Setting up…",
@@ -2585,28 +2962,410 @@
     "body": "The page you're looking for doesn't exist or has been moved.",
     "cta": "Go to Dashboard"
   },
+  "RepertoireStats": {
+    "title": "Repertoire statistics",
+    "eyebrow": "Analytics · as of {date}",
+    "noteNames": "Note names",
+    "naming": {
+      "en": "B / Bb",
+      "pl": "H / B"
+    },
+    "exportCsv": "Export CSV",
+    "views": "Views",
+    "view": {
+      "overview": "Overview",
+      "quality": "Data quality",
+      "mismatches": "Strummy vs recording",
+      "songs": "Songs",
+      "context": "Song vs repertoire",
+      "progressions": "Progressions",
+      "arrangement": "Arrangement"
+    },
+    "bpm": "{value} BPM",
+    "capo": "capo {fret}",
+    "editSong": "Edit song",
+    "side": {
+      "strummy": "Strummy",
+      "recording": "Recording"
+    },
+    "key": {
+      "major": "{root} major",
+      "minor": "{root} minor",
+      "majorWord": "major",
+      "minorWord": "minor"
+    },
+    "field": {
+      "tempo": "Tempo",
+      "key": "Key",
+      "duration": "Length",
+      "chords": "Chords",
+      "capo": "Capo"
+    },
+    "mark": {
+      "ok": "Matches",
+      "error": "Error",
+      "review": "To check",
+      "explained": "Explained"
+    },
+    "level": {
+      "starter": "Starter",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "coverage": {
+      "link": "Recording link",
+      "analysis": "Analysis",
+      "transcription": "Transcription"
+    },
+    "reason": {
+      "tuning": "Tuned down a half step",
+      "shifted": "Other shift",
+      "capo": "Capo",
+      "relative": "Relative key",
+      "halfDouble": "Half / double tempo",
+      "lowConfidence": "Unsure key"
+    },
+    "verdict": {
+      "tempo": "Different tempo ({percent}%)",
+      "key": "Different key",
+      "duration": "Different length ({delta})",
+      "chords": "{percent}% of the chords heard",
+      "chordsShifted": "{before}% → {after}% shifted {semitones} semitones",
+      "keyShifted": "Shifted {semitones} semitones",
+      "lowConfidence": "The analysis is unsure of the key ({strength})",
+      "capo": "Matches with the capo",
+      "relative": "Same notes, another tonic",
+      "halfDouble": "The same pulse counted at half or double speed"
+    },
+    "funnel": {
+      "title": "Data coverage",
+      "incomplete": "{count} of {total} songs miss something.",
+      "axis": "axis: 0–{total} songs",
+      "step": {
+        "all": "Songs in the repertoire",
+        "link": "With a recording link",
+        "analysis": "With a recording analysis",
+        "transcription": "With a note transcription"
+      },
+      "missing": {
+        "link": "{count} without a link",
+        "analysis": "{count} without an analysis",
+        "transcription": "{count} waiting"
+      },
+      "unlocks": {
+        "link": "A link lets song2logic analyse the recording.",
+        "analysis": "Unlocks tempo, key, metre, chords, sections and progressions, and the comparison with Strummy.",
+        "transcription": "Unlocks the vocal range, bass density and the arrangement profile."
+      },
+      "elsewhere": "More analyses than links: {count} analyses come from a recording other than the link.",
+      "target": "target ≈ {count}"
+    },
+    "gaps": {
+      "song": "Song",
+      "students": "Students",
+      "studentsHint": "Students with the song in their repertoire",
+      "showRest": "Show the other {count}",
+      "recording": {
+        "title": "No recording",
+        "todo": "Add a YouTube link when editing the song."
+      },
+      "analysis": {
+        "title": "Recording, no analysis",
+        "todo": "Run song2logic for these songs."
+      },
+      "transcription": {
+        "title": "Waiting for a transcription",
+        "todo": "In the song2logic queue; more arrive with every run."
+      }
+    },
+    "overview": {
+      "mismatchesLabel": "Strummy vs recording",
+      "ofMeasured": "of {count} measured",
+      "haveMismatch": "have at least one disagreement.",
+      "seeMismatches": "See the disagreements",
+      "metre": "Beats per bar, from recordings",
+      "songs": "{count, plural, one {# song} other {# songs}}",
+      "metreHint": "{beats} per bar: {count, plural, one {# song} other {# songs}}",
+      "beats": "{beats} per bar",
+      "gapsTitle": "What is missing",
+      "gapsOrder": "In each group, the songs most students play come first.",
+      "qualityLabel": "Data quality",
+      "qualityUnit": "average score",
+      "qualityBands": "{good} good · {fair} to fill · {poor} poor",
+      "qualityFill": "{count, plural, one {# value} other {# values}} to enter from recordings",
+      "seeQuality": "See the fix queue"
+    },
+    "mismatches": {
+      "filter": "Field",
+      "type": {
+        "all": "All",
+        "tempo": "Tempo",
+        "key": "Key",
+        "duration": "Length",
+        "chords": "Chords"
+      },
+      "order": "Songs most students play come first",
+      "errorsTitle": "To fix",
+      "errorsSub": "Strummy's value disagrees with the recording and nothing explains it.",
+      "explainedTitle": "Explained",
+      "explainedSub": "The tuning, a capo, the relative key, how the tempo is counted or an unsure analysis explains the difference. Usually nothing needs changing.",
+      "songs": "{count, plural, one {song} other {songs}}",
+      "noErrors": "Nothing to fix here.",
+      "noExplained": "No explained disagreements.",
+      "reasonCount": {
+        "tuning": "Tuned down a half step",
+        "shifted": "Other shift",
+        "capo": "Capo",
+        "relative": "Relative key",
+        "halfDouble": "Half / double tempo",
+        "lowConfidence": "Unsure key"
+      },
+      "column": {
+        "song": "Song",
+        "field": "Field",
+        "values": "Strummy → recording",
+        "verdict": "Verdict"
+      },
+      "showRest": "Show the other {count}"
+    },
+    "songs": {
+      "search": "Search title or artist",
+      "allCategories": "All",
+      "level": "Level",
+      "allLevels": "Level: all",
+      "onlyMismatches": "Only with disagreements",
+      "compare": "Compare {title}",
+      "uncompare": "Remove {title} from the comparison",
+      "column": {
+        "song": "Song",
+        "category": "Cat.",
+        "level": "Level",
+        "data": "Data",
+        "strummy": "Str.",
+        "recording": "Rec.",
+        "suggested": "Sug.",
+        "chords": "Chords",
+        "students": "Stud."
+      },
+      "emptyTitle": "No songs for these filters",
+      "clearFilters": "Clear filters",
+      "footer": "{shown} of {total} songs · Str. = Strummy, Rec. = recording, Sug. = capo suggested by the recording",
+      "more": "Show the next {count}"
+    },
+    "compare": {
+      "title": "Comparison",
+      "sub": "{count, plural, one {# selected song} other {# selected songs}}. Note ranges on one axis, C1–C6.",
+      "capo": "{entered} in Strummy · {suggested} suggested",
+      "noTranscription": "no transcription",
+      "close": "Close the comparison",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "row": {
+        "tempo": "Tempo",
+        "key": "Key",
+        "capo": "Capo",
+        "metre": "Beats per bar",
+        "duration": "Length",
+        "vocalRange": "Vocal range",
+        "bassRange": "Bass range",
+        "bassDensity": "Bass notes per bar",
+        "chords": "Chords",
+        "progressions": "Progressions"
+      }
+    },
+    "context": {
+      "chart": "Chart",
+      "table": "Table",
+      "measure": {
+        "tempo": "Tempo",
+        "key": "Key",
+        "vocalHigh": "Highest vocal note",
+        "vocalLow": "Lowest vocal note",
+        "bassDensity": "Bass notes per bar"
+      },
+      "withAnalysis": "{count, plural, one {# song with an analysis} other {# songs with an analysis}}",
+      "fewTranscribed": "Only {count, plural, one {# song} other {# songs}} with a transcription",
+      "withTranscription": "{count, plural, one {# song with a transcription} other {# songs with a transcription}}",
+      "binTitle": "{label}: {count, plural, one {# song} other {# songs}}",
+      "noValue": "This song has no value here yet.",
+      "sameKey": "Same key as {count, plural, one {# other song} other {# other songs}}.",
+      "onlyKey": "The only song in this key.",
+      "noAnalysisTitle": "No recording analysis",
+      "noAnalysis": "{title} has no analysis yet: tempo, key and progressions appear here once song2logic analyses its recording.",
+      "helpTitle": "How to read the descriptions",
+      "help": {
+        "numbers": {
+          "title": "Numbers:",
+          "text": "“faster than 45% of the repertoire”. At the ends “the fastest” or “the slowest in the repertoire”."
+        },
+        "key": {
+          "title": "Key:",
+          "text": "no more or less, only how many songs share the key."
+        },
+        "few": {
+          "title": "Fewer than 30 songs:",
+          "text": "each song is a point and the description is a count (“3 of 8”), never a percentage."
+        }
+      },
+      "standing": {
+        "tempo": {
+          "top": "The fastest in the repertoire.",
+          "bottom": "The slowest in the repertoire.",
+          "count": "Faster than {count} of {of} other songs.",
+          "share": "Faster than {percent}% of the repertoire."
+        },
+        "vocalHigh": {
+          "top": "The highest vocal note in the repertoire.",
+          "bottom": "The lowest top note in the repertoire.",
+          "count": "Higher than in {count} of {of} other songs.",
+          "share": "Higher than in {percent}% of the repertoire."
+        },
+        "vocalLow": {
+          "top": "The lowest vocal note in the repertoire.",
+          "bottom": "The highest bottom note in the repertoire.",
+          "count": "Lower than in {count} of {of} other songs.",
+          "share": "Lower than in {percent}% of the repertoire."
+        },
+        "bassDensity": {
+          "top": "The densest bass in the repertoire.",
+          "bottom": "The sparsest bass in the repertoire.",
+          "count": "Denser bass than in {count} of {of} other songs.",
+          "share": "Denser bass than in {percent}% of the repertoire."
+        }
+      }
+    },
+    "picker": {
+      "label": "Song",
+      "placeholder": "Find a song by title or artist",
+      "clear": "Clear the song"
+    },
+    "progressions": {
+      "rankingTitle": "Progression ranking",
+      "rankingSub": "From recordings, in degrees of the key.",
+      "songCount": "number of songs",
+      "oneMajor": "One major chord",
+      "oneMinor": "One minor chord",
+      "bars": "{count, plural, one {# bar} other {# bars}}",
+      "showAll": "Show all {count} progressions",
+      "showTop": "Show the most common only",
+      "knownTitle": "Known patterns",
+      "pattern": {
+        "Andalusian": "Andalusian",
+        "Canon": "Canon",
+        "Jazz ii-V-I": "ii–V–I"
+      },
+      "compareTitle": "Strummy and the recording",
+      "fromSheet": "Strummy's progression read from the chord sheet.",
+      "fromList": "Strummy has only a list of chords, so the order is a guess. Add a chord sheet to confirm it.",
+      "strummySheet": "Strummy (sheet)",
+      "strummyList": "Strummy (chord list)",
+      "agreement": "Agreement",
+      "notInStrummy": "not in Strummy",
+      "noneHeard": "song2logic found no repeating progression.",
+      "status": {
+        "match": "Matches",
+        "reordered": "Another order in the sheet",
+        "unordered": "Order uncertain",
+        "recordingOnly": "Only in the recording"
+      },
+      "sectionsTitle": "Sections",
+      "sectionsSummary": "{sections, plural, one {# section} other {# sections}} · {bars, plural, one {# bar} other {# bars}}",
+      "pickSong": "Pick a song to compare its progressions with the recording."
+    },
+    "arrangement": {
+      "background": "Background: only {count, plural, one {# song} other {# songs}} with a transcription",
+      "howToRead": "“Plays” is the share of bars in which the track plays. The dashed frame is the track's range across the transcribed repertoire (axis C1–E6).",
+      "plays": "Plays",
+      "perBar": "Notes / bar",
+      "range": "Range",
+      "silent": "does not play",
+      "repertoire": "repertoire",
+      "remove": "Remove {title}",
+      "transcribed": "Songs with a transcription ({count})",
+      "none": "No song has a transcription yet."
+    },
+    "quality": {
+      "songs": "{count, plural, one {# song} other {# songs}}",
+      "fillTile": "To fill from recordings",
+      "fillTileSub": "values in {count, plural, one {# song} other {# songs}}",
+      "queueTitle": "Fix queue",
+      "queueHint": "Rules by impact (weight × failing songs). Click one to see its songs.",
+      "fillRule": "Fill from the recording",
+      "fillRuleHint": "Empty in Strummy, known from the recording.",
+      "fillSongs": "{count, plural, one {# song} other {# songs}}",
+      "songsTitle": "Songs to fix",
+      "songsFiltered": "Songs: {rule}",
+      "songsHint": "Songs most students play first, then the lowest scores.",
+      "clearFilter": "Show all",
+      "empty": "Nothing to fix here.",
+      "footer": "{shown} of {total} songs",
+      "more": "Show the next {count}",
+      "fill": {
+        "field": {
+          "tempo": "tempo",
+          "key": "key",
+          "chords": "chords"
+        },
+        "button": "Enter {field} {value}",
+        "confirmLabel": "Confirm the change",
+        "confirm": "Save {field} {value} in “{title}”?",
+        "save": "Save",
+        "cancel": "Cancel",
+        "saved": "Saved: {field} {value}",
+        "error": {
+          "invalid": "This value cannot be saved.",
+          "forbidden": "Only an admin can do this.",
+          "not-found": "The song or its analysis is gone.",
+          "nothing-to-fill": "The field is no longer empty — reload the page.",
+          "save-failed": "Could not save. Try again."
+        }
+      },
+      "aiRule": "AI proposals",
+      "aiRuleHint": "Genre, level or artist a model proposed, waiting for your decision.",
+      "aiHowTo": "AI proposals are made on a home machine (Claude headless or the local model), never by the app:",
+      "ai": {
+        "field": {
+          "category": "genre",
+          "level": "level",
+          "author": "artist"
+        },
+        "proposal": "AI proposes {field}: {value}",
+        "confidence": "{percent}% sure",
+        "accept": "Accept",
+        "reject": "Reject",
+        "accepted": "Accepted: {field} {value}",
+        "rejected": "Rejected: {field} {value}",
+        "error": {
+          "invalid": "This proposal cannot be saved.",
+          "forbidden": "Only an admin can do this.",
+          "not-found": "The proposal is no longer open — reload the page.",
+          "stale": "The field was filled meanwhile — the proposal was set aside.",
+          "save-failed": "Could not save. Try again."
+        }
+      },
+      "bulk": {
+        "fill": "Enter everything from the recordings ({count})",
+        "ai": "Accept AI proposals from {percent}% ({count})",
+        "fillConfirm": "Write {count, plural, one {# value} other {# values}} from the recordings into empty fields?",
+        "aiConfirm": "Accept {count, plural, one {# AI proposal} other {# AI proposals}} at {percent}% or more?",
+        "confirmLabel": "Confirm the change",
+        "save": "Save",
+        "cancel": "Cancel",
+        "filled": "Entered {count, plural, one {# value} other {# values}}.",
+        "accepted": "Accepted {count}; {stale} were already filled.",
+        "failedSome": "{count, plural, one {# write failed} other {# writes failed}}; try again.",
+        "error": "Could not save. Try again."
+      }
+    }
+  },
   "DataQuality": {
-    "title": "Data quality",
-    "subtitle": "What to fix first, ranked by how much it lowers the scores.",
-    "entitySongs": "Songs",
-    "entityLessons": "Lessons",
-    "entityStudents": "Students",
-    "comingNext": "coming next",
     "averageScore": "Average score",
-    "recordsCount": "{count} records",
     "bandGood": "Good",
     "bandFair": "Needs work",
     "bandPoor": "Poor",
-    "fixQueueTitle": "Fix queue",
-    "fixQueueHint": "Click a rule to see the records that break it.",
     "failingOf": "{failing} of {applicable}",
     "critical": "critical",
-    "recordsTitle": "Lowest scores first",
-    "recordsFiltered": "Breaking: {rule}",
-    "clearFilter": "Show all",
-    "edit": "Edit",
-    "noIssues": "Nothing to fix here.",
-    "showingFirst": "Showing the first {shown} of {total}.",
     "badgeEyebrow": "Data quality",
     "badgeAllGood": "This song is fully described.",
     "badgeOpenReport": "Open the report",
@@ -2677,8 +3436,545 @@
         "chords-format": {
           "label": "Chords field holds more than chords",
           "hint": "Keep only the chord list here (\"Am, F, C, G\"). Move tablature to Tablature and lyrics to Lyrics with chords."
+        },
+        "key-recording": {
+          "label": "Key disagrees with the recording",
+          "hint": "Check the key: “Strummy vs recording” shows what the recording says and why."
+        },
+        "tempo-recording": {
+          "label": "Tempo disagrees with the recording",
+          "hint": "Check the tempo: the recording measures something else, not half or double."
+        },
+        "chords-recording": {
+          "label": "Chords disagree with the recording",
+          "hint": "Fewer than 60% of the chords are heard, even after a tuning or capo shift."
+        },
+        "duration-recording": {
+          "label": "Length disagrees with the recording",
+          "hint": "Maybe another version of the song is linked."
+        },
+        "chords-verified": {
+          "label": "Chords disagree with the recording",
+          "hint": "Logic's Chord ID hears other chords than the ones written here. Open the song: the \"Chord sources\" card shows where."
         }
       }
+    }
+  },
+  "Billing": {
+    "priceListEyebrow": "Price list",
+    "priceListTitle": "Lesson packages",
+    "priceListEmpty": "You have no packages yet. Add the first one below.",
+    "packageLessons": "{count, plural, one {# lesson} other {# lessons}}",
+    "packageInactive": "Off",
+    "edit": "Edit",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on",
+    "addTitle": "New package",
+    "nameLabel": "Name",
+    "namePlaceholder": "4-lesson package",
+    "lessonCountLabel": "Lessons",
+    "priceLabel": "Price (zł)",
+    "save": "Save",
+    "add": "Add package",
+    "cancel": "Cancel",
+    "saveFailed": "Could not save. Try again.",
+    "invalidPrice": "Enter the price in złoty, e.g. 480 or 480,50.",
+    "termsEyebrow": "Rules",
+    "termsTitle": "Counting lessons",
+    "startLabel": "Count lessons from",
+    "startHint": "Every lesson held from this day on takes one lesson off the student's package. Earlier lessons change nothing. Left empty, lessons are not counted.",
+    "termLabel": "Payment term (days)",
+    "saved": "Saved",
+    "balanceEyebrow": "Balance",
+    "balanceTitle": "Lessons on the package",
+    "balanceCredit": "{count, plural, one {# lesson left} other {# lessons left}}",
+    "balanceZero": "No paid lessons",
+    "balanceDue": "{count, plural, one {# lesson to pay for} other {# lessons to pay for}}",
+    "balanceNotCounting": "Held lessons are not counted yet — set the start day in Settings → Payments.",
+    "loadFailed": "Could not load billing for this student. Refresh the page to try again.",
+    "sellEyebrow": "Sale",
+    "sellTitle": "Sell a package",
+    "sellNoPackages": "The price list is empty.",
+    "sellNoPackagesLink": "Add a package in settings",
+    "sellPackageLabel": "Package",
+    "sellAction": "Sell package",
+    "sellRateHint": "If the student has their own lesson rate, the price is rate × lessons. Lessons are added only once it is paid.",
+    "purchasesEyebrow": "Packages",
+    "purchasesTitle": "Sold packages",
+    "purchasesEmpty": "This student has no package yet.",
+    "purchaseStatus": {
+      "pending": "To pay",
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    },
+    "soldOn": "sold {date}",
+    "dueOn": "due {date}",
+    "paidOn": "paid {date}",
+    "paymentMethodLabel": "Payment method",
+    "paymentMethod": {
+      "transfer": "Transfer",
+      "cash": "Cash",
+      "other": "Other"
+    },
+    "markPaid": "Record payment",
+    "cancelPurchase": "Cancel",
+    "ledgerEyebrow": "History",
+    "ledgerTitle": "Balance changes",
+    "ledgerEmpty": "The balance has not changed yet.",
+    "ledgerLesson": "Lesson {date}",
+    "ledgerPurchase": "Package “{name}”",
+    "ledgerReason": {
+      "purchase": "Package",
+      "lesson": "Lesson",
+      "manual": "Correction",
+      "refund": "Refund"
+    },
+    "homeEyebrow": "Billing",
+    "homeTitle": "Lesson package",
+    "homeLink": "Details",
+    "homeOpen": "To pay: {amount}",
+    "parentEmpty": "Your teacher does not handle billing in Strummy yet — you settle payments directly.",
+    "familyEyebrow": "Account",
+    "familyTitle": "Billing",
+    "familyTitleChild": "Billing — {name}",
+    "familySubtitle": "How many lessons are left on the package, what is due and what changed.",
+    "familyChildSwitch": "Choose a child",
+    "familyDueHint": "Lessons held beyond the package are settled with your teacher on the next package.",
+    "familyOpenEyebrow": "To pay",
+    "familyOpenTitle": "Packages to pay",
+    "familyPay": "Pay",
+    "familyPayOffline": "Online payment will appear here soon. For now pay by bank transfer or to your teacher.",
+    "familyPriceListEyebrow": "Price list",
+    "familyPriceListTitle": "Packages",
+    "familyPriceListHint": "Your prices. Your teacher issues a package — it then appears under “To pay”.",
+    "familyEmpty": "Your teacher does not handle billing in Strummy yet. Once they issue the first package, you will see it here.",
+    "familySelf": "Me"
+  },
+  "Lab": {
+    "title": "Lab",
+    "subtitle": "Private data collected on this Mac. Only you see it, and only while the app runs locally.",
+    "built": "Hub built {date}",
+    "openSource": "Open",
+    "counts": {
+      "entities": "Songs",
+      "tabs": "Tabs",
+      "entities_in_strummy": "In Strummy",
+      "entities_liked": "Liked",
+      "entities_with_tabs": "With tabs"
+    },
+    "groups": {
+      "personal": "Personal data",
+      "analysis": "Analyses",
+      "tabs": "Guitar Pro tabs",
+      "dataset": "Reference datasets"
+    },
+    "columns": {
+      "source": "Source",
+      "rows": "Rows",
+      "size": "Size",
+      "modified": "Updated",
+      "license": "Licence"
+    },
+    "allSources": "All sources",
+    "file": "File",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search every field…",
+    "searchButton": "Search",
+    "clear": "Clear",
+    "results": "{count, plural, one {# row} other {# rows}}",
+    "pageOf": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next",
+    "rowDetails": "Row {number}",
+    "empty": "No rows match.",
+    "nav": {
+      "label": "Lab sections",
+      "sources": "Sources",
+      "songs": "Songs",
+      "tabs": "Tabs"
+    },
+    "songs": {
+      "title": "Songs",
+      "subtitle": "Every song the hub joined across sources. Without a query the songs found in the most sources come first.",
+      "searchLabel": "Search songs",
+      "searchPlaceholder": "Artist or title…",
+      "sortLabel": "Sort",
+      "sortSources": "Most sources first",
+      "sortName": "By artist",
+      "apply": "Apply",
+      "clear": "Clear",
+      "hasLabel": "Must appear in",
+      "columnSong": "Song",
+      "columnSources": "Sources",
+      "columnTabs": "Tabs",
+      "empty": "No songs match."
+    },
+    "entity": {
+      "back": "All songs",
+      "strummySong": "Song in Strummy",
+      "chords": "Chords over time",
+      "annotation": "Chord annotation",
+      "rawRow": "{source} · row {number}",
+      "extra": {
+        "artist": "Artist",
+        "other": "Other"
+      },
+      "bestTab": "best version"
+    },
+    "card": {
+      "eyebrow": "Lab",
+      "title": "{count, plural, one {In # source} other {In # sources}}",
+      "tabs": "{count, plural, one {# Guitar Pro tab} other {# Guitar Pro tabs}}",
+      "open": "Open in the Lab"
+    },
+    "tabs": {
+      "title": "Tabs",
+      "subtitle": "The Guitar Pro library: one copy of every good file from the four packs, songs and exercises.",
+      "searchLabel": "Search tabs",
+      "searchPlaceholder": "Artist or title…",
+      "kindLabel": "Kind",
+      "kind": {
+        "all": "Songs and exercises",
+        "songs": "Songs",
+        "exercises": "Exercises"
+      },
+      "filter": {
+        "tuning": "Any tuning",
+        "role": "Any instrument",
+        "topic": "Any exercise topic"
+      },
+      "apply": "Apply",
+      "clear": "Clear",
+      "columnTab": "Tab",
+      "columnTracks": "Instruments",
+      "columnTuning": "Tuning",
+      "columnTempo": "Tempo",
+      "columnBars": "Bars",
+      "empty": "No tabs match.",
+      "role": {
+        "guitar": "Guitar",
+        "bass": "Bass",
+        "drums": "Drums",
+        "other": "Other"
+      },
+      "back": "All tabs",
+      "download": "Download the file",
+      "oldFormat": "Guitar Pro 1/2 file (.gtp): alphaTab cannot read it. Download it and open it in TuxGuitar.",
+      "format": "Format",
+      "metre": "Metre",
+      "album": "Album",
+      "transcriber": "Transcribed by",
+      "exercise": "Exercise",
+      "openSong": "{count, plural, one {The song in the Lab} other {The song in the Lab (# versions)}}",
+      "parts": "Parts (bar · name)",
+      "trackName": "Track",
+      "capo": "Capo",
+      "notes": "Notes",
+      "techniques": "Techniques",
+      "texts": "Notes in the file",
+      "lyrics": "Lyrics",
+      "copies": "{count, plural, one {# copy in the packs} other {# copies in the packs}}"
+    },
+    "viewer": {
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "speed": "Speed",
+      "metronome": "Metronome",
+      "countIn": "Count-in",
+      "loop": "Loop",
+      "track": "Track",
+      "zoom": "Zoom",
+      "loading": "Rendering…",
+      "playerLoading": "Loading the sounds…",
+      "error": "The tab could not be shown"
+    }
+  },
+  "ParentHome": {
+    "portalLabel": "Family portal",
+    "noChildTitle": "No child linked yet",
+    "noChildBody": "Ask your teacher to connect your account to your child, and their lessons and notes will show up here.",
+    "checkingIn": "Checking in on",
+    "withTeacher": "with {name}",
+    "streakLabel": "{count, plural, one {day streak} other {day streak}}",
+    "songsLabel": "{count, plural, one {song} other {songs}}",
+    "thisWeek": "this week",
+    "lessonsEyebrow": "Schedule",
+    "lessonsTitle": "Upcoming lessons",
+    "lessonsEmpty": "No lessons scheduled yet. Your teacher will add them here.",
+    "lessonFallback": "Guitar lesson",
+    "lessonNext": "Next",
+    "noteTitle": "Latest note",
+    "noteTitleFrom": "Latest note from {name}",
+    "noteAfter": "After the lesson on {date}",
+    "noteNew": "New",
+    "noteEmpty": "No notes from {name}'s teacher yet. They'll appear here after lessons.",
+    "practiceTitle": "Recent practice",
+    "practiceOnTrack": "On track this week",
+    "practiceNeedsAttention": "Needs attention",
+    "practiceLogged": "{minutes} logged",
+    "practiceGoal": "Goal · {minutes} min/day",
+    "practiceNone": "No practice logged",
+    "practiceSome": "Practice logged",
+    "practiceToday": "Today",
+    "practiceYesterday": "Yesterday",
+    "homeworkEyebrow": "Practice",
+    "homeworkTitle": "Homework",
+    "homeworkEmpty": "No homework from the teacher yet.",
+    "homeworkUntitled": "Untitled assignment",
+    "homeworkDue": "due {date}",
+    "assignmentStatus": {
+      "not_started": "To do",
+      "in_progress": "In progress",
+      "completed": "Done",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "historyEyebrow": "History",
+    "historyTitle": "Recent lessons",
+    "historyEmpty": "The first lesson is still ahead.",
+    "lessonStatus": {
+      "COMPLETED": "Took place",
+      "CANCELLED": "Cancelled",
+      "OPEN": "To be confirmed"
+    },
+    "songsEyebrow": "Repertoire",
+    "songsTitle": "Songs",
+    "songsEmpty": "No songs in the repertoire yet.",
+    "songStatus": {
+      "to_learn": "To learn",
+      "started": "Started",
+      "remembered": "Remembered",
+      "with_author": "With recording",
+      "mastered": "Mastered"
+    }
+  },
+  "Exercises": {
+    "eyebrow": "Practice",
+    "title": "Exercises",
+    "count": "{count, plural, =0 {# exercises} one {# exercise} other {# exercises}}",
+    "emptyTitle": "No exercises yet",
+    "emptyBody": "Open a song card, pick a part and press “Save as exercise”. The riff or part you save shows up here, ready to open in a loop at the tempo you chose.",
+    "untitledSong": "Untitled song",
+    "details": "Part {part} · {tempo}% · {source}",
+    "open": "Open in the card",
+    "delete": "Delete",
+    "deleteNamed": "Delete exercise {name}",
+    "confirmDelete": "Sure?",
+    "cancel": "Cancel",
+    "deleteFailed": "Could not delete.",
+    "kinds": {
+      "riff": "Riff",
+      "chords": "Chord changes",
+      "strum": "Strumming",
+      "other": "Other"
+    },
+    "sources": {
+      "recording": "recording",
+      "backing": "backing track"
+    }
+  },
+  "SongCard": {
+    "backToSong": "← Back to the song",
+    "source": "Recording analysis · {date}",
+    "factKey": "Key",
+    "factTempo": "Tempo",
+    "factMetre": "Metre",
+    "factLength": "Length",
+    "factParts": "Parts",
+    "noAnalysisTitle": "This song's recording has not been analysed yet",
+    "noAnalysisBody": "The card will show the parts, the chords in time and the strum once the recording is analysed.",
+    "mapTitle": "Song map",
+    "mapHint": "click a part or a point on the timeline",
+    "noPartsHint": "The parts of this recording have not been analysed yet: the chords come from the whole-song analysis.",
+    "timeline": "Recording timeline",
+    "timelineValue": "{time}, bar {bar}",
+    "pageTitle": "Bars {from}–{to} of {total}",
+    "noParts": "no parts",
+    "partRange": "bars {from}–{to} · {start}–{end}",
+    "loop": "Loop {loop} ×{times}",
+    "barLabel": "Bar {n}: {chords}",
+    "openCard": "Open the song card →",
+    "nowTitle": "Playing now",
+    "now": "Now · {where}",
+    "nowBar": "bar {n}",
+    "next": "Then, {bars, plural, =0 {later in this bar} one {in one bar} other {in # bars}}",
+    "nextNone": "End",
+    "shapes": "Shapes of this part",
+    "noShape": "no shape",
+    "barTitle": "Bar {n}",
+    "rowChord": "Chord",
+    "rowStrum": "Strum",
+    "rowBass": "Bass",
+    "approxTitle": "Bass and drums · approximate",
+    "strumRule": "Strum direction by the rule: ↓ on the eighths, ↑ between.",
+    "strumRuleTeacher": "Hits from the recording, direction by the rule: ↓ on the eighths, ↑ between. The analysis cannot hear the hand's direction.",
+    "noStrum": "This analysis has no guitar strum pattern yet.",
+    "groove": "Groove of the part: {groove}. Toms, crash and ride left out — the analysis hears them in every bar.",
+    "playerTitle": "Recording",
+    "unavailableEyebrow": "Recording unavailable",
+    "unavailableTitle": "The owner of this recording does not let it play outside YouTube.",
+    "failedTitle": "The YouTube player did not load.",
+    "noRecordingTitle": "This analysis has no link to a YouTube recording.",
+    "unavailableBody": "The card still works with the backing track: the chords in the card's strum and a metronome, at any tempo. You can play the recording alongside, on YouTube.",
+    "openOnYouTube": "Open on YouTube ↗",
+    "play": "Play",
+    "pause": "Pause",
+    "tempo": "Tempo",
+    "loopPart": "Loop part",
+    "copyLink": "Practice link",
+    "linkCopied": "Link copied",
+    "saveExercise": "Save as exercise",
+    "exerciseTitle": "Save as exercise",
+    "exerciseHint": "Part {part} at {tempo}% tempo, as the card plays it now.",
+    "exerciseName": "Name",
+    "exerciseKind": "Kind",
+    "exerciseNote": "Note (optional)",
+    "exerciseSave": "Save",
+    "exerciseSaving": "Saving…",
+    "exerciseCancel": "Cancel",
+    "exerciseClose": "Close",
+    "exerciseSaved": "Saved. Find it under Exercises.",
+    "exerciseDuplicate": "This part already has an exercise with that name. Pick another name.",
+    "exerciseFailed": "The exercise could not be saved. Try again.",
+    "exerciseKinds": {
+      "riff": "Riff",
+      "chords": "Chord changes",
+      "strum": "Strumming",
+      "other": "Other"
+    },
+    "where": "{part} · bar {bar}",
+    "wholeSong": "Whole song",
+    "heroLink": "Song card",
+    "sourceRecording": "Recording",
+    "sourceBacking": "Backing",
+    "backingTempo": "Backing tempo in percent",
+    "soundSource": "Sound source",
+    "proposal": "Analysis proposal",
+    "proposalBody": "On the reference recordings the analysis gets major/minor right about 60–65% of the time. Listen, correct and approve — until then a student sees them greyed.",
+    "approve": "Approve chords",
+    "correct": "Correct",
+    "approveOne": "You approve this part.",
+    "approveGroup": "You approve {count} parts with the same progression: {names}.",
+    "approved": "✓ Chords approved — students see them",
+    "unapprove": "Withdraw approval",
+    "editChordsHint": "Click a bar to change its chord (the song's chords in turn). Corrected bars show a gold chord.",
+    "editDone": "Done",
+    "partApproved": "chords ✓",
+    "partProposal": "chords ?",
+    "strumEdit": "Correct strum",
+    "strumReset": "Back to the rule",
+    "strumCell": "Sixteenth {count}: {mark}",
+    "strumByYou": "You corrected this part's strum — students see your version.",
+    "strumByTeacher": "Strum from the teacher.",
+    "reviewFailed": "The change could not be saved — the card is back to the stored version.",
+    "capoHint": "The analysis suggests a capo on fret {fret}: {shapes} instead of {chords}.",
+    "noCardTitle": "This card is not ready yet",
+    "noCardBody": "The card appears once the song's recording is analysed and the song is in your repertoire.",
+    "unsure": "Your teacher has not checked the chords of this part yet — they may differ from the recording."
+  },
+  "Onboarding": {
+    "railRoleTeacher": "Teacher setup",
+    "railRoleStudent": "Student setup",
+    "railRoleNone": "Getting started",
+    "railTitle": "Let's get you <em>set up</em>.",
+    "railSubStudent": "Three minutes. We'll have you practising in no time.",
+    "railSubTeacher": "Three minutes. We'll have you teaching in no time.",
+    "railProgress": "Step {current} of {total} · ~{seconds}s left",
+    "stepEyebrow": "Step {current} of {total}",
+    "steps": {
+      "role": {
+        "title": "Your role",
+        "sub": "Teacher or student"
+      },
+      "journey": {
+        "title": "Your guitar journey",
+        "sub": "Level, goals & practice"
+      },
+      "about": {
+        "title": "About you",
+        "sub": "Name, instrument, experience"
+      },
+      "studio": {
+        "title": "Your studio",
+        "sub": "Name, location, branding"
+      },
+      "schedule": {
+        "title": "Schedule first lesson",
+        "sub": "Pick a time"
+      },
+      "doneStudent": {
+        "title": "Done",
+        "sub": "See your first lesson plan"
+      },
+      "doneTeacher": {
+        "title": "Done",
+        "sub": "You're ready to teach"
+      }
+    },
+    "journey": {
+      "title": "Where are you with guitar?",
+      "sub": "Be honest — this just helps us recommend the right pieces and pace. There's no wrong answer.",
+      "levelLabel": "Your current level",
+      "goalsLabel": "What do you want to do with guitar?",
+      "goalsHint": "pick any that resonate",
+      "guitarsLabel": "What are you playing on?",
+      "guitarsHint": "optional · pick any you have",
+      "targetLabel": "Daily practice target",
+      "targetUnit": "min/day",
+      "pickGoal": "Pick at least one goal to continue.",
+      "summaryLead": "Based on your answers",
+      "summaryBody": "your teacher sees them before your first lesson and picks the pieces and the pace to match."
+    },
+    "levels": {
+      "beginner": {
+        "title": "New to guitar",
+        "sub": "Open chords coming together"
+      },
+      "novice": {
+        "title": "A few months in",
+        "sub": "C–G–D feel natural"
+      },
+      "intermediate": {
+        "title": "Confident",
+        "sub": "Songs from memory · barre chords"
+      },
+      "advanced": {
+        "title": "Many years in",
+        "sub": "Improvising · complex pieces"
+      }
+    },
+    "goals": {
+      "classics": "Learn classic songs",
+      "fingerstyle": "Fingerstyle / classical",
+      "songwriting": "Write my own songs",
+      "theory": "Understand theory",
+      "perform": "Play live / open mic",
+      "jam": "Jam with friends",
+      "record": "Record my playing",
+      "speed": "Get faster / cleaner"
+    },
+    "guitars": {
+      "acoustic": "Acoustic (steel-string)",
+      "classical": "Classical (nylon)",
+      "electric": "Electric",
+      "bass": "Bass",
+      "ukulele": "Ukulele",
+      "none": "I don't have one yet"
+    },
+    "nav": {
+      "back": "Back",
+      "continue": "Continue",
+      "finish": "Finish setup",
+      "saving": "Saving…"
+    },
+    "done": {
+      "eyebrow": "All done",
+      "title": "You're all set, {name}.",
+      "titleNoName": "You're all set, there.",
+      "copyStudent": "Your profile is ready. Your first lesson plan is waiting on your dashboard.",
+      "copyTeacher": "Your studio is set up. Invite students and book lessons whenever you are ready.",
+      "cta": "Go to dashboard"
     }
   }
 }

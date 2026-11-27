@@ -1,9 +1,9 @@
 import { getTranslations } from 'next-intl/server';
 
 import { parseChordsColumn } from '@/lib/music-theory/chord-parser';
+import type { ChordShape } from '@/lib/music-theory/chord-shape';
 import { analyzeHarmony } from '@/lib/music-theory/harmony-analysis';
 import type { Song, SongSection } from '@/components/songs/types';
-import type { RecordQuality } from '@/lib/data-quality/quality.types';
 import type {
   RelatedSongRow,
   SongLearner,
@@ -13,17 +13,21 @@ import type {
 import type { StudentPickerOption } from '@/components/users/student-picker/StudentPicker';
 
 import { SongChordsCard } from './SongChordsCard';
+import { SongChordSourcesCard } from './SongChordSourcesCard';
 import { SongHarmonyCard } from './SongHarmonyCard';
 import { SongLyricsCard } from './SongLyricsCard';
 import { SongNotesCard } from './SongNotesCard';
 import { SongTabsCard } from './SongTabsCard';
+import { SongMapCard } from './SongMapCard';
+import { SongTechniquesCard } from './SongTechniquesCard';
+import { SongTranscriptionCard } from './SongTranscriptionCard';
 import { SongResourcesCard } from './SongResourcesCard';
 import ProductionTab from '@/components/songs/production/ProductionTab';
 import { SongDetailContentTabs } from './SongDetail.ContentTabs';
 import { SongHero } from './SongHero';
 import { SongSections } from './SongSections';
 import { SongAudioPlayer } from './SongAudioPlayer';
-import { QualityCard } from './SongSidebar.QualityCard';
+import { AdminCards, type SongAdminData } from './SongSidebar.AdminCards';
 import {
   LearnersCard,
   QuickAssignCard,
@@ -50,8 +54,10 @@ type Props = {
   canEdit?: boolean;
   /** Staff, or a student whose teacher turned the feature on. */
   canSeeHarmony?: boolean;
-  /** Admin only — data-quality score and what is missing. */
-  quality?: RecordQuality | null;
+  /** A chord-map student's shapes new in this song; null hides the line. */
+  newShapes?: ChordShape[] | null;
+  /** Admin only — data-quality score and, on the owner's Mac, the song in the Lab. */
+  admin?: SongAdminData | null;
 };
 
 const upperCaseChordRoots = (chords: string | null | undefined): string => {
@@ -91,7 +97,8 @@ export const SongDetail = async ({
   canSeeProduction,
   canEdit = false,
   canSeeHarmony = false,
-  quality = null,
+  newShapes = null,
+  admin = null,
 }: Props) => {
   const t = await getTranslations('Songs');
   const chordTokens = chordTokensFromSong(song);
@@ -101,8 +108,16 @@ export const SongDetail = async ({
 
   const chordsAndStructure = (
     <>
-      <SongChordsCard title={song.title ?? t('thisSongFallback')} chordTokens={chordTokens} />
+      <SongChordsCard
+        title={song.title ?? t('thisSongFallback')}
+        chordTokens={chordTokens}
+        newShapes={newShapes}
+      />
       {canSeeHarmony && <SongHarmonyCard analysis={harmonyOfSong(song)} />}
+      <SongTechniquesCard songId={song.id} />
+      {canSeeProduction && <SongChordSourcesCard songId={song.id} />}
+      {canSeeProduction && <SongTranscriptionCard songId={song.id} />}
+      {canSeeProduction && <SongMapCard songId={song.id} />}
       {canSeeProduction && <SongSections songId={song.id} sections={sections} canEdit={canEdit} />}
     </>
   );
@@ -135,7 +150,7 @@ export const SongDetail = async ({
         ) : (
           <YourProgressCard entry={viewerEntry} songId={song.id} canPick={canPickToLearn} />
         )}
-        {quality && <QualityCard quality={quality} songId={song.id} />}
+        {admin && <AdminCards {...admin} songId={song.id} />}
         <RelatedCard related={related} />
         <SongResourcesCard
           ultimateGuitarLink={song.ultimate_guitar_link}
@@ -158,7 +173,12 @@ export const SongDetail = async ({
         padding: '0 0 60px',
       }}
     >
-      <SongHero song={song} chordTokens={chordTokens} canEdit={canEdit} />
+      <SongHero
+        song={song}
+        chordTokens={chordTokens}
+        canEdit={canEdit}
+        canOpenCard={canSeeProduction || viewerEntry !== null}
+      />
 
       {overview}
     </div>

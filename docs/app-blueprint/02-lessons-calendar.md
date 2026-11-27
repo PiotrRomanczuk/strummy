@@ -84,8 +84,13 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 - **Inbound** arrives two ways: the push webhook (`POST /api/webhooks/google-calendar`) and
   the polling cron (`app/api/cron/calendar-sync/route.ts` plus a dispatcher step) calling
   `syncAllTeacherCalendars()` — polling covers teachers who never enable the webhook.
-  Inbound events resolve students by attendee email (`resolveStudentAttendee`); ambiguous
-  matches are skipped and logged, unknown emails can create shadows on the import paths.
+  Every inbound path (webhook, cron, bulk import) resolves the student with
+  `resolveLessonStudent` (`lib/services/calendar-attendee.ts`): an attendee who is a
+  student → that student; else an attendee who is a parent → their only child; else a
+  single unknown attendee → a new shadow student. Anything else (several students, a
+  parent with several or no children, several unknown attendees, a staff-only profile)
+  is skipped and logged for the teacher to add by hand — a lesson never lands on a
+  parent's profile.
 - **Cron-limit gotcha**: `vercel.json` schedules only 7 cron routes (Vercel plan cap);
   calendar polling is **not** among them — it rides the `/api/cron/dispatcher` bundle, and
   `/api/cron/calendar-sync` exists for manual runs only.
@@ -103,8 +108,9 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
   events to the real email — per-event isolated, failures dead-letter to `system_logs`, the
   claim itself stays atomic.
 - **Webhook hardening** (spec 07 §7.7 — shipped): secret required
-  (`GOOGLE_CALENDAR_WEBHOOK_SECRET`); dev skip only via explicit
-  `CALENDAR_WEBHOOK_SKIP_TOKEN=true`; `x-goog-resource-state` is parsed and unknown states
+  (`GOOGLE_CALENDAR_WEBHOOK_SECRET`) in every environment, with no switch to turn the
+  check off (the former `CALENDAR_WEBHOOK_SKIP_TOKEN` was removed 2026-11-25); the channel
+  token is compared in constant time; `x-goog-resource-state` is parsed and unknown states
   are ignored with a warning.
 - **Token refresh** (§7.5 — shipped): both the user-session and admin Google clients run
   `refreshTokenIfExpired` and persist refreshed tokens.
@@ -122,7 +128,7 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 > - **Filtering** — status chips (multi-select, each toggles) and a year filter;
 >   both route through the single `buildHref` and reset to page 1.
 > - **Sorting** — Date, Title and Status are sortable column headers with
->   `[asc, desc]` pairs. Student and Teacher are deliberately *not*: those names
+>   `[asc, desc]` pairs. Student and Teacher are deliberately _not_: those names
 >   live on a joined profile, so the query cannot order by them. Non-date sorts
 >   carry a `scheduled_at` tiebreak, without which rows sharing a title could
 >   reshuffle between pages and a lesson appear twice or not at all.
@@ -140,13 +146,12 @@ Views: `lesson_counts_per_student` / `lesson_counts_per_teacher` / `v_teacher_le
 > `sortHref`/`yearHref`) are gone — adding a facet meant editing five call sites,
 > and each decided for itself whether to keep the page.
 
-
 | Surface                                                                               | Route / component                                                                                   | Maturity                                                  |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Lessons list (status filter, sort, role-aware)                                        | `/dashboard/lessons` → `LessonsList`                                                       | mounted (nav "Lessons" / "My Lessons")                    |
-| Lesson detail (repertoire card, notes, status)                                        | `/dashboard/lessons/[id]` → `LessonDetail`                                                 | mounted                                                   |
-| Lesson create (student picker + new-email shadow, songs, schedule)                    | `/dashboard/lessons/new` → `LessonForm`                                                    | mounted                                                   |
-| Lesson edit                                                                           | `/dashboard/lessons/[id]/edit` → `LessonForm` (edit mode)                                  | mounted                                                   |
+| Lessons list (status filter, sort, role-aware)                                        | `/dashboard/lessons` → `LessonsList`                                                                | mounted (nav "Lessons" / "My Lessons")                    |
+| Lesson detail (repertoire card, notes, status)                                        | `/dashboard/lessons/[id]` → `LessonDetail`                                                          | mounted                                                   |
+| Lesson create (student picker + new-email shadow, songs, schedule)                    | `/dashboard/lessons/new` → `LessonForm`                                                             | mounted                                                   |
+| Lesson edit                                                                           | `/dashboard/lessons/[id]/edit` → `LessonForm` (edit mode)                                           | mounted                                                   |
 | Calendar controls (connect/disconnect, historical bulk import w/ SSE, webhook enable) | `/dashboard/calendar` → `IntegrationsSection` + `HistoricalCalendarSync` + `CalendarWebhookControl` | nav-hidden (`calendar` in `CORE_LOOP_HIDDEN_ITEMS`)       |
 | Conflict resolution (side-by-side diff, use-local/use-remote)                         | `/dashboard/calendar/conflicts` → `ConflictList` over `fetchPendingConflicts`/`resolveConflict`     | nav-hidden (reachable via calendar page)                  |
 | Google connect on settings                                                            | `IntegrationsSection` also mounted on `/dashboard/settings`                                         | mounted                                                   |

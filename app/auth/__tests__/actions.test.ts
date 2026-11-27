@@ -33,7 +33,7 @@ jest.mock('@/lib/supabase/server', () => ({
 /**
  * The admin client backs the invite gate: sign-up is refused unless a profile
  * is already waiting for that address. Shaped as the query chain the action
- * actually builds — .from().select().or().is().limit() — so a change to that
+ * actually builds — .from().select().eq().is().limit(), once per column — so a change to that
  * chain fails here rather than silently returning undefined.
  */
 const mockAdminLimit = jest.fn();
@@ -42,7 +42,7 @@ jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => ({
     from: () => ({
       select: () => ({
-        or: () => ({
+        eq: () => ({
           is: () => ({
             limit: mockAdminLimit,
           }),
@@ -278,6 +278,13 @@ describe('Auth Actions', () => {
     it('should successfully send password reset email', async () => {
       const result = await resetPassword('test@example.com');
       expect(result).toEqual({ success: true });
+    });
+
+    it('asks for the plain callback URL (GoTrue rejects a ?next= query)', async () => {
+      await resetPassword('test@example.com');
+      expect(mockResetPasswordForEmail).toHaveBeenCalledWith('test@example.com', {
+        redirectTo: 'http://localhost:3000/auth/callback',
+      });
     });
 
     it('should check rate limit before sending email', async () => {

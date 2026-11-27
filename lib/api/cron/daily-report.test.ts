@@ -38,12 +38,12 @@ jest.mock('next/server', () => {
 });
 
 // Mock the sendAdminSongReport before importing the route
-jest.mock('@/app/actions/email/send-admin-report', () => ({
+jest.mock('@/lib/email/send-admin-report', () => ({
   sendAdminSongReport: jest.fn(),
 }));
 
 import { GET } from '@/app/api/cron/daily-report/route';
-import { sendAdminSongReport } from '@/app/actions/email/send-admin-report';
+import { sendAdminSongReport } from '@/lib/email/send-admin-report';
 
 const mockSendAdminSongReport = sendAdminSongReport as jest.MockedFunction<
   typeof sendAdminSongReport

@@ -3,7 +3,7 @@
  * `songs` columns it may fill. No I/O here — see 2026-11-song-analyses.ts.
  */
 
-import { keyAgreement, musicKey } from './song-analyses-keys';
+import { durationMatches, keyAgreement, musicKey } from '@/lib/music-theory/recording-agreement';
 
 /** The parts of song2logic's analysis.json the backfill reads. */
 export interface SongAnalysisDocument {
@@ -37,9 +37,6 @@ export interface SongRow {
 export type FillableField = 'tempo' | 'time_signature' | 'chords' | 'youtube_url';
 export type SongFill = Partial<Pick<SongRow, FillableField>>;
 
-// The recording counts as the song when its length is within 4 % or 6 s of songs.duration_ms.
-const DURATION_TOLERANCE = 0.04;
-const DURATION_TOLERANCE_MS = 6000;
 // A chord heard in fewer bars than this share of the song (and fewer than MIN_CHORD_BARS) is a passing error.
 const MIN_CHORD_SHARE = 0.03;
 const MIN_CHORD_BARS = 2;
@@ -51,15 +48,6 @@ const TRUSTED_METRES = [3, 4, 6];
 /** Columns filled by an earlier run stay recorded when a re-run finds nothing left to fill. */
 export function mergeFilledFields(earlier: string[] | null | undefined, now: string[]): string[] {
   return [...new Set([...(earlier ?? []), ...now])].sort();
-}
-
-export function durationMatches(
-  songDurationMs: number | null,
-  sourceDurationS?: number
-): boolean | null {
-  if (!songDurationMs || !sourceDurationS) return null;
-  const slack = Math.max(DURATION_TOLERANCE * songDurationMs, DURATION_TOLERANCE_MS);
-  return Math.abs(sourceDurationS * 1000 - songDurationMs) <= slack;
 }
 
 /** The song's chords by use, without the ones heard only in passing. */

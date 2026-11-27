@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { SongsList } from '@/components/songs/SongsList';
 import { SONG_LEVELS } from '@/components/shared/level-label.helpers';
+import { isMainTechnique, type TechniqueKey } from '@/lib/music-theory/song-techniques';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getViewerRepertoireSongIds } from '@/lib/services/song-detail-queries';
 import {
@@ -64,6 +65,11 @@ const parseSort = (value: string | string[] | undefined): SongsListSort => {
   return raw && SORTS.has(raw as SongsListSort) ? (raw as SongsListSort) : 'newest';
 };
 
+const parseTechnique = (value: string | string[] | undefined): TechniqueKey | undefined => {
+  const raw = pickString(value);
+  return raw && isMainTechnique(raw) ? raw : undefined;
+};
+
 const parsePage = (value: string | string[] | undefined): number => {
   const raw = Number(pickString(value));
   return Number.isInteger(raw) && raw > 0 ? raw : 1;
@@ -81,6 +87,7 @@ export default async function SongsPage({ searchParams }: { searchParams: Search
     key: pickString(params.key)?.trim() || undefined,
     author: pickString(params.author)?.trim() || undefined,
     category: pickString(params.category)?.trim() || undefined,
+    technique: parseTechnique(params.technique),
     search: pickString(params.search)?.trim() || undefined,
     sort: parseSort(params.sort),
     page: parsePage(params.page),

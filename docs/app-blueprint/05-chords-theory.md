@@ -1,6 +1,6 @@
 ---
 created: 2026-07-18
-updated: 2026-08-04
+updated: 2026-11-22
 domain: Chords, Theory & Fretboard
 tables:
   [
@@ -25,6 +25,9 @@ Three self-service learning tools orbiting the core loop, all currently hidden f
    per-student access grants) authored by the teacher.
 3. **Fretboard explorer** — a pure client-side chord/scale visualizer with **no tables** (no
    persistence by design; documented here because it shares the domain).
+4. **Chord map** (2026-11-22) — from the songs a student has worked on, the chord shapes they
+   know; over the whole catalogue, the songs they can play today and the one new shape that
+   opens the most. First of the "Mapa nauki" views (CHT-3 … CHT-6 below). Owns no table.
 
 ## Data model
 
@@ -85,6 +88,23 @@ chapter reader).
 `components/fretboard/` (`useFretboardExplorer`, board/controls/info panel) — chord and
 scale selection, transposition, all client-side. No writes, no reads, no RLS involvement.
 
+### Chord map
+
+- **Shapes** — `lib/music-theory/chord-shape.ts` reads `songs.chords` (hand-typed: `"Am, G"`,
+  `"{G,e,b,C}"`, Polish `fis`/`h`/`H`, section labels, repeat marks) into guitar shapes: the
+  root, enharmonics unified, plus major/minor/dim; 7ths, sus, add and slash basses fold into the
+  triad. A field holding anything that is not a chord, or more than 10 shapes, is unreadable and
+  the song is left out (386 of 402 filled fields read, 2026-11). Chords are taken as written —
+  a sheet with a capo already names the shapes.
+- **Known shapes** — `getKnownShapes` (`lib/services/chord-map-queries.ts`): songs of the
+  student's lessons (any status) ∪ repertoire past `to_learn`, de-duplicated by song.
+- **The map** — `buildChordMap` (`lib/services/chord-map.ts`, pure): playable songs, songs one
+  shape away grouped by that shape, a tile per shape used ≥ 2 times. Clicking a tile is a
+  client-only "what if"; nothing is written.
+- **Access** — no new RLS: every signed-in user reads active songs, a student their own lessons
+  and repertoire, a teacher their students'. The student page is off until the teacher turns on
+  the `chord-map` student feature (`lib/config/student-features.ts`).
+
 ## UI surfaces
 
 | Surface                                                                           | Route                                                                             | State                                                                                                            |
@@ -93,6 +113,8 @@ scale selection, transposition, all client-side. No writes, no reads, no RLS inv
 | Skills hub                                                                        | `/dashboard/skills`                                                               | **stub** ("Coming soon"); `skills` in `CORE_LOOP_HIDDEN_ITEMS`                                                   |
 | Theory: course list, course detail, lesson reader, new/edit forms, access manager | `/dashboard/theory`, `/[courseId]`, `/[courseId]/[lessonId]`, `new`/`edit` routes | **nav-hidden** (`theory` hidden for both teacher and student menus) but fully routed                             |
 | Fretboard explorer                                                                | `/dashboard/fretboard` → `components/fretboard/`                                  | **nav-visible** — teacher "Tools" (revealed 2026-07-19), student "Resources" (revealed 2026-08-01)               |
+| Chord map (student)                                                               | `/dashboard/chord-map` → `components/chord-map/`                                  | **nav-hidden**: per-student feature `chord-map`; linked from "My Repertoire" when on, else redirects there       |
+| Chord map (teacher, one student)                                                  | `/dashboard/users/[id]/chord-map`                                                 | mounted — link in the student header actions                                                                     |
 
 ## Gaps & planned work
 
@@ -130,6 +152,34 @@ receipt, not full progress tracking) — and explicitly **not** through the assi
 is chord-only). Theory is **not** the first v1.1 slice: activation stays blocked on **content
 authoring** (a content problem, not code), so it trails the chord-quiz slice.
 
+### CHT-3 · "What next" tree (Mapa nauki, view 2)
+
+Missing: the student stands on a song and sees two or three branches, each one new thing — another
+song with no new shape, or one of the shapes that opens the most. Picking a song extends a path.
+Approach: reuse `buildChordMap`; the branch songs come from `playable` and the top `next` entries.
+Open: does a pick become a song request to the teacher or a `to_learn` repertoire row? Files:
+`components/chord-map/`. Accept: a path of three picks recomputes the branches each time.
+
+### CHT-4 · "Same progression" (Mapa nauki, view 3)
+
+Missing: songs grouped by their degree progression (I–V–vi–IV …) across keys. The progressions
+live in `song_analyses.analysis.harmony.progressions`, readable by staff only. Approach: a
+`security definer` function returning only the progression and the song id for active songs
+(migration). Accept: a student sees the progressions of the catalogue, never another column.
+
+### CHT-5 · Strum patterns with a counter (Mapa nauki, view 4)
+
+Missing: the catalogue's guitar strum patterns, the songs using each, and a count-in at a chosen
+tempo. Source: the guitar rhythm in `song_analyses.analysis.rhythm` (per-bar patterns once the
+library is re-analysed) — same `security definer` read as CHT-4. Accept: a pattern plays with
+↓/↑ and "1 i 2 i" at 50–140 BPM.
+
+### CHT-6 · "I know this shape too"
+
+Missing: the map's tiles are a what-if; a shape learned outside lessons is forgotten on reload.
+Approach: table `student_known_shapes` (student writes through an RPC, ADR-0001) merged into
+`getKnownShapes`. Gated by the Tranche 3 rule: new schema, so only after the map is used.
+
 ### Theory's nav absence is deliberate — not a gap
 
 Raised as a finding in the 2026-07-27 click-through audit ("`/dashboard/theory` and its whole route
@@ -153,7 +203,9 @@ Journey catalog: `reference/E2E_JOURNEYS.md` §B8.5 (quiz attempt logged), §A11
   journey to add when THY-1 activates); fretboard render journey A11.1.
 - **Unit**: `lib/music-theory/srs.ts` interval/ease math (time-injected — cover reset, 1→6→round
   progression, ease floor); `components/skills/ChordQuiz/chord-quiz.helpers.unit.test.ts`
-  (exists).
+  (exists). Chord map: `lib/music-theory/chord-shape.unit.test.ts` (real `songs.chords`
+  values), `lib/services/chord-map.unit.test.ts`, `components/chord-map/ChordMap.test.tsx`
+  (what-if toggle, ranking, start over).
 - **Integration/RLS**: chord tables own-row vs staff-read policies; theory student visibility
   (unpublished-but-granted and published-but-ungranted must both yield zero rows).
 

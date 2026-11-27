@@ -4,8 +4,6 @@
 #   {"status":"done","title":"…","summary":"…","ref":"LES-3"}   edits ready
 #   {"status":"skip","reason":"…"}                             nothing shipped
 
-AUTO_MERGE_MAX_LINES="${AUTO_MERGE_MAX_LINES:-200}"
-
 result_field() { jq -r ".$1 // empty" "$WORK/result.json" 2>/dev/null; }
 
 # Archive the attempt so a failed or skipped run can be read afterwards.
@@ -14,7 +12,7 @@ archive_attempt() {
   mkdir -p "$dest"
   cp -r "$WORK"/. "$dest"/ 2>/dev/null || true
   # -N so files the agent created show up in the patch too.
-  { git add -A -N . && git diff origin/main >"$dest/changes.patch"; } || true
+  { git add -A -N . && git diff "origin/$NIGHTLY_BRANCH" >"$dest/changes.patch"; } || true
   log "attempt archived: $dest"
 }
 
@@ -71,10 +69,10 @@ ship_result() {
   git commit -q -m "$title" -m "$summary" -m "Automated by strummy-dev-agent on uwh ($mode${ref:+, $ref})."
   git push -q -u origin "$branch"
 
-  lines="$(git diff --numstat origin/main...HEAD | awk '{s+=$1+$2} END {print s+0}')"
-  risky="$(git diff --name-only origin/main...HEAD | grep -E "$RISKY_PATHS_RE" || true)"
+  lines="$(git diff --numstat "origin/$NIGHTLY_BRANCH"...HEAD | awk '{s+=$1+$2} END {print s+0}')"
+  risky="$(git diff --name-only "origin/$NIGHTLY_BRANCH"...HEAD | grep -E "$RISKY_PATHS_RE" || true)"
 
-  pr_url="$(gh pr create -R "$REPO_SLUG" --base main --head "$branch" --title "$title" \
+  pr_url="$(gh pr create -R "$REPO_SLUG" --base "$NIGHTLY_BRANCH" --head "$branch" --title "$title" \
     --label "$AGENT_LABEL" --label e2e \
     --body "$summary
 
@@ -82,16 +80,12 @@ ship_result() {
 Opened unattended by \`strummy-dev-agent\` on uwh — mode: **$mode**${ref:+, gap **$ref**}. $lines changed lines.")"
   log "PR opened: $pr_url ($lines lines)"
 
+  # The author never merges: a PR into dev lands after green CI and a ✅ from the independent
+  # pr-review agent (owner rule, 2026-11-22); promotion to main stays Piotr's. Risky paths are only flagged.
   if [ -n "$risky" ]; then
-    gh pr comment "$pr_url" --body "Not auto-merged — touches paths with side effects on merge: \`$(tr '\n' ' ' <<<"$risky")\`" >/dev/null
-    log "auto-merge withheld: risky paths"
-  elif [ "$lines" -gt "$AUTO_MERGE_MAX_LINES" ]; then
-    gh pr comment "$pr_url" --body "Not auto-merged — $lines changed lines (limit $AUTO_MERGE_MAX_LINES). Needs a human review." >/dev/null
-    log "auto-merge withheld: $lines > $AUTO_MERGE_MAX_LINES lines"
-  else
-    gh pr merge "$pr_url" --auto --squash >/dev/null
-    log "auto-merge armed"
+    gh pr comment "$pr_url" --body "Touches paths with side effects on merge: \`$(tr '\n' ' ' <<<"$risky")\` — review these with extra care." >/dev/null
   fi
+  log "waiting for review on Dziś"
   archive_attempt "$mode-shipped"
-  git checkout -q --detach origin/main
+  git checkout -q --detach "origin/$NIGHTLY_BRANCH"
 }

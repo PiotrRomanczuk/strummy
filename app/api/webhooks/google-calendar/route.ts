@@ -1,21 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchAndSyncRecentEvents } from '@/lib/services/google-calendar-sync';
 import { logger } from '@/lib/logger';
+import { secretsMatch } from '@/lib/auth/secret-compare';
+
+// The sync runs after the reply to Google (see `after` below), within this budget.
+export const maxDuration = 60;
 
 function validateToken(req: NextRequest): boolean {
   const secret = process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET;
+  // No secret, no notifications: there is deliberately no switch that turns
+  // this check off. Local testing sets the secret and sends the matching token.
   if (!secret) {
-    // Allow skip only when an explicit dev flag is set — never silently in dev.
-    if (process.env.CALENDAR_WEBHOOK_SKIP_TOKEN === 'true') {
-      logger.warn('[Webhook] Token validation skipped (CALENDAR_WEBHOOK_SKIP_TOKEN=true)');
-      return true;
-    }
     logger.error('[Webhook] GOOGLE_CALENDAR_WEBHOOK_SECRET not configured');
     return false;
   }
-  const token = req.headers.get('x-goog-channel-token');
-  return token === secret;
+  return secretsMatch(req.headers.get('x-goog-channel-token'), secret);
 }
 
 type ResourceState = 'sync' | 'exists' | 'not_exists';
@@ -85,10 +85,15 @@ export async function POST(req: NextRequest) {
     userId: subscription.user_id,
   });
 
-  // Trigger sync for the user
-  // We don't await this to return quickly to Google
-  fetchAndSyncRecentEvents(subscription.user_id).catch((err) => {
-    logger.error('[Webhook] Background sync failed:', err);
+  // Reply to Google at once and sync afterwards. A bare un-awaited promise
+  // could be frozen with the function once the response is sent; `after`
+  // keeps the invocation alive until the sync finishes.
+  after(async () => {
+    try {
+      await fetchAndSyncRecentEvents(subscription.user_id);
+    } catch (err) {
+      logger.error('[Webhook] Background sync failed:', err);
+    }
   });
 
   return NextResponse.json({ status: 'processed' });

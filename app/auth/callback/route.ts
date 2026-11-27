@@ -1,19 +1,35 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isRecoverySession, RESET_PASSWORD_PATH } from '@/lib/auth/recovery-session';
 import { updateLastSignIn } from '@/app/actions/account';
 import { logEmailConfirmed } from '@/lib/auth/auth-event-logger';
+import { postLoginPath } from '@/lib/auth/post-login-redirect';
+
+/** Non-dashboard targets an auth email may send through this callback. */
+const CALLBACK_EXTRA_PATHS = ['/reset-password'] as const;
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/dashboard';
+  // `next` is appended to an origin below, so it must be a validated
+  // same-origin path: a raw value like `@host` or `//host` would leave the site.
+  const requestedNext = postLoginPath(searchParams.get('next'), CALLBACK_EXTRA_PATHS);
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // A session from a reset link goes to the new-password form. GoTrue
+      // rejects `?next=` on the redirect URL, so the session itself says so
+      // (see lib/auth/recovery-session.ts).
+      const isRecovery = isRecoverySession(data?.session?.access_token);
+      const next = isRecovery ? RESET_PASSWORD_PATH : requestedNext;
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer
+      // The scheme the visitor used. A production build served without TLS (the
+      // E2E runner's `next start`) also sets x-forwarded-host, and a hardcoded
+      // https sent that browser to a port that speaks plain http.
+      const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0].trim();
+      const scheme = forwardedProto === 'http' ? 'http' : 'https';
       const isLocalEnv = process.env.NODE_ENV === 'development';
 
       // Check if user needs onboarding
@@ -33,11 +49,12 @@ export async function GET(request: Request) {
           .eq('user_id', user.id)
           .single();
 
-        if (!profile?.is_student && !profile?.is_teacher && !profile?.is_admin) {
+        // A reset must reach the form even for an account without a role yet.
+        if (!isRecovery && !profile?.is_student && !profile?.is_teacher && !profile?.is_admin) {
           const onboardingUrl = isLocalEnv
             ? `${origin}/onboarding`
             : forwardedHost
-              ? `https://${forwardedHost}/onboarding`
+              ? `${scheme}://${forwardedHost}/onboarding`
               : `${origin}/onboarding`;
           return NextResponse.redirect(onboardingUrl);
         }
@@ -47,7 +64,7 @@ export async function GET(request: Request) {
         // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
         return NextResponse.redirect(`${origin}${next}`);
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+        return NextResponse.redirect(`${scheme}://${forwardedHost}${next}`);
       } else {
         // Fallback to environment variables if origin is localhost (behind proxy) but not local env
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;

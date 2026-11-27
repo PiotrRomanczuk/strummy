@@ -1,10 +1,12 @@
-import type { Tables } from '@/types/database.types';
-
+import type { MismatchField } from '@/lib/repertoire-stats/mismatches';
 import { isCanonicalGenre } from './song-genres';
 import type { QualityProfile } from './quality.types';
+import type { SongQualityRecord } from './song-quality-record';
 import {
   chordsListIsClean,
+  chordsMatchRecording,
   draftIsFresh,
+  hasChordReview,
   hasRealKey,
   hasText,
   isUnique,
@@ -13,27 +15,18 @@ import {
   songIdentityOf,
 } from './song-checks';
 
-export const SONG_QUALITY_COLUMNS =
-  'id, title, author, level, key, chords, lyrics_with_chords, spotify_link_url, youtube_url, ultimate_guitar_link, tempo, strumming_pattern, category, is_draft, created_at';
-
-export type SongQualityRecord = Pick<
-  Tables<'songs'>,
-  | 'id'
-  | 'title'
-  | 'author'
-  | 'level'
-  | 'key'
-  | 'chords'
-  | 'lyrics_with_chords'
-  | 'spotify_link_url'
-  | 'youtube_url'
-  | 'ultimate_guitar_link'
-  | 'tempo'
-  | 'strumming_pattern'
-  | 'category'
-  | 'is_draft'
-  | 'created_at'
->;
+/** A field that disagrees with the recording, unexplained (tuning, capo, relative key… do not count). */
+const recordingRule = (
+  field: MismatchField,
+  weight: 1 | 2
+): QualityProfile<SongQualityRecord>['rules'][number] => ({
+  id: `song.${field}-recording`,
+  dimension: 'consistency',
+  weight,
+  appliesTo: (s) => !!s.recording?.[field],
+  check: (s) => s.recording?.[field] !== 'error',
+  fixField: field === 'duration' ? undefined : field,
+});
 
 export const songQualityProfile: QualityProfile<SongQualityRecord> = {
   entity: 'song',
@@ -83,6 +76,14 @@ export const songQualityProfile: QualityProfile<SongQualityRecord> = {
       weight: 2,
       appliesTo: (s) => hasText(s.chords),
       check: chordsListIsClean,
+      fixField: 'chords',
+    },
+    {
+      id: 'song.chords-verified',
+      dimension: 'validity',
+      weight: 2,
+      appliesTo: (s) => hasText(s.chords) && hasChordReview(s),
+      check: chordsMatchRecording,
       fixField: 'chords',
     },
     { id: 'song.unique', dimension: 'uniqueness', weight: 3, check: isUnique },
@@ -136,6 +137,10 @@ export const songQualityProfile: QualityProfile<SongQualityRecord> = {
       check: (s) => hasText(s.strumming_pattern),
       fixField: 'strumming_pattern',
     },
+    recordingRule('key', 2),
+    recordingRule('tempo', 2),
+    recordingRule('chords', 2),
+    recordingRule('duration', 1),
     {
       id: 'song.stale-draft',
       dimension: 'consistency',

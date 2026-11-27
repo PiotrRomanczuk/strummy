@@ -61,6 +61,7 @@ export const buildHref = (next: Partial<SongsListFilters>, current: SongsListFil
   if (merged.key) params.set('key', merged.key);
   if (merged.author) params.set('author', merged.author);
   if (merged.category) params.set('category', merged.category);
+  if (merged.technique) params.set('technique', merged.technique);
   if (merged.search) params.set('search', merged.search);
   if (merged.sort !== 'newest') params.set('sort', merged.sort);
   const page = resetsPage ? 1 : merged.page;

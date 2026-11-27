@@ -25,6 +25,7 @@ function itemIds(groups: ReturnType<typeof getMenuGroups>): string[] {
 const TEACHER_ITEMS = [
   'lessons',
   'songs',
+  'exercises',
   'assignments',
   'students',
   'calendar',
@@ -61,7 +62,9 @@ const HIDDEN = ['theory', 'logs'];
 describe('menuConfig — sidebar scope', () => {
   it('admin sidebar shows the teaching items, verified tools and the admin logs', () => {
     const ids = itemIds(getMenuGroups({ isAdmin: true, isTeacher: true, isStudent: false }));
-    expect(ids.sort()).toEqual([...TEACHER_ITEMS, 'logs', 'import-logs', 'data-quality'].sort());
+    expect(ids.sort()).toEqual(
+      [...TEACHER_ITEMS, 'logs', 'import-logs', 'repertoire-stats'].sort()
+    );
   });
 
   it('teacher (non-admin) sees the same set minus the admin logs', () => {

@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import type { OnboardingWizard } from './useOnboarding';
 import { StepAbout } from './steps/StepAbout';
 import { StepDone } from './steps/StepDone';
@@ -21,7 +23,8 @@ export const OnboardingSteps = ({ wizard, stepKey, firstName }: Props) => {
   // walks — so the two disagreed on screen for the whole flow ("STEP 2 OF 5"
   // beside "Step 2 of 6"). Deriving it here means the count cannot drift again
   // when a step is added or removed.
-  const eyebrow = `Step ${wizard.step + 1} of ${wizard.steps.length}`;
+  const t = useTranslations('Onboarding');
+  const eyebrow = t('stepEyebrow', { current: wizard.step + 1, total: wizard.steps.length });
 
   switch (stepKey) {
     case 'role':
@@ -29,6 +32,7 @@ export const OnboardingSteps = ({ wizard, stepKey, firstName }: Props) => {
     case 'journey':
       return (
         <StepJourney
+          eyebrow={eyebrow}
           student={wizard.student}
           onSetLevel={(level) => wizard.setStudent('skillLevel', level)}
           onToggleGoal={wizard.toggleGoal}
@@ -38,7 +42,8 @@ export const OnboardingSteps = ({ wizard, stepKey, firstName }: Props) => {
       );
     case 'about':
       return (
-        <StepAbout eyebrow={eyebrow}
+        <StepAbout
+          eyebrow={eyebrow}
           teacher={wizard.teacher}
           onChange={wizard.setTeacher}
           onToggleGuitar={wizard.toggleTeacherGuitar}
@@ -46,7 +51,8 @@ export const OnboardingSteps = ({ wizard, stepKey, firstName }: Props) => {
       );
     case 'studio':
       return (
-        <StepStudio eyebrow={eyebrow}
+        <StepStudio
+          eyebrow={eyebrow}
           teacher={wizard.teacher}
           onChange={wizard.setTeacher}
           onToggleTeaches={wizard.toggleTeaches}

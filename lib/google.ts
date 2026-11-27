@@ -17,7 +17,17 @@ export const getGoogleOAuth2Client = (redirectUri?: string) => {
   return new google.auth.OAuth2(clientId, clientSecret, uri);
 };
 
-export const getGoogleAuthUrl = (redirectUri?: string) => {
+/**
+ * Consent URL for the Google integration. `state` is required: the callback
+ * rejects a code that does not come back with it (lib/auth/google-oauth-state).
+ */
+export const getGoogleAuthUrl = ({
+  state,
+  redirectUri,
+}: {
+  state: string;
+  redirectUri?: string;
+}) => {
   const oauth2Client = getGoogleOAuth2Client(redirectUri);
 
   const scopes = [
@@ -30,6 +40,7 @@ export const getGoogleAuthUrl = (redirectUri?: string) => {
     access_type: 'offline',
     scope: scopes,
     prompt: 'consent',
+    state,
   });
 };
 
@@ -40,6 +51,10 @@ export interface CalendarEvent {
   start: { dateTime: string; timeZone?: string };
   end: { dateTime: string; timeZone?: string };
   attendees?: Array<{ email: string; displayName?: string }>;
+  /** "cancelled" for a deleted event or occurrence (listed only with `showDeleted`). */
+  status?: 'confirmed' | 'tentative' | 'cancelled';
+  /** RFC 3339 time of the event's last change. */
+  updated?: string;
 }
 
 /**
@@ -170,7 +185,8 @@ export async function getGoogleClientAdmin(userId: string) {
 export async function getCalendarEventsInRangeAdmin(
   userId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  { includeCancelled = false }: { includeCancelled?: boolean } = {}
 ): Promise<CalendarEvent[]> {
   const client = await getGoogleClientAdmin(userId);
   const calendar = google.calendar({ version: 'v3', auth: client });
@@ -181,6 +197,10 @@ export async function getCalendarEventsInRangeAdmin(
     timeMax: endDate.toISOString(),
     singleEvents: true,
     orderBy: 'startTime',
+    // Deleted events and cancelled occurrences come back with status
+    // "cancelled", so the sync can cancel the lessons made from them.
+    showDeleted: includeCancelled,
+    maxResults: 2500,
   });
 
   return (response.data.items || []) as CalendarEvent[];

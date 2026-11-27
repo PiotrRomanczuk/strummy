@@ -3,7 +3,7 @@
  *
  * Guards:
  *  - prod request with no secret → 401
- *  - CALENDAR_WEBHOOK_SKIP_TOKEN=true allows skip when no secret configured
+ *  - no environment flag can turn the token check off
  *  - unknown x-goog-resource-state values are not processed
  *  - 'sync' state is always acknowledged with 200
  *  - 'exists'/'not_exists' states are processed
@@ -35,7 +35,9 @@ jest.mock('next/server', () => {
       this.headers = new Headers(init?.headers);
     }
   }
-  return { NextResponse: MockNextResponse, NextRequest: MockNextRequest };
+  // Runs the task at once, so the test sees the sync it schedules.
+  const after = (task: () => unknown) => void Promise.resolve(task()).catch(() => {});
+  return { NextResponse: MockNextResponse, NextRequest: MockNextRequest, after };
 });
 
 jest.mock('@/lib/supabase/admin', () => ({
@@ -118,28 +120,24 @@ describe('POST /api/webhooks/google-calendar — token & resource-state (7.7)', 
     expect(res.status).toBe(401);
   });
 
-  it('returns 401 when secret is not configured and CALENDAR_WEBHOOK_SKIP_TOKEN is not set', async () => {
+  it('returns 401 when secret is not configured', async () => {
     delete process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET;
-    delete process.env.CALENDAR_WEBHOOK_SKIP_TOKEN;
 
     const res = await POST(makeRequest('sync'));
     expect(res.status).toBe(401);
   });
 
-  it('allows request when CALENDAR_WEBHOOK_SKIP_TOKEN=true and no secret configured', async () => {
+  it('ignores the removed CALENDAR_WEBHOOK_SKIP_TOKEN flag: still 401 without a secret', async () => {
     delete process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET;
     process.env.CALENDAR_WEBHOOK_SKIP_TOKEN = 'true';
 
     const res = await POST(makeRequest('sync'));
-    // 'sync' → 200 ack, not 401
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.status).toBe('ok');
+    expect(res.status).toBe(401);
+    delete process.env.CALENDAR_WEBHOOK_SKIP_TOKEN;
   });
 
-  it('does NOT skip when NODE_ENV=development but CALENDAR_WEBHOOK_SKIP_TOKEN is absent', async () => {
+  it('does not skip in development either', async () => {
     delete process.env.GOOGLE_CALENDAR_WEBHOOK_SECRET;
-    delete process.env.CALENDAR_WEBHOOK_SKIP_TOKEN;
     process.env.NODE_ENV = 'development';
 
     const res = await POST(makeRequest('sync'));

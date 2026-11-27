@@ -7,7 +7,7 @@
  * - Dead letter queue management
  */
 
-'use server';
+import 'server-only';
 
 import type { Enums } from '@/types/database.types';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -27,7 +27,6 @@ import { DEFAULT_LOCALE, isAppLocale, type AppLocale } from '@/i18n/locales';
 import { sendNotification } from './notification-service';
 import { isStudentEmailEnabled } from './student-email-gate';
 import { logger } from '@/lib/logger';
-
 
 interface QueuedNotification {
   id: string;
@@ -221,8 +220,15 @@ export async function retryFailedNotifications(): Promise<{
 
         const locale = isAppLocale(recipient.locale) ? recipient.locale : DEFAULT_LOCALE;
 
-        // Student email kill switch: skip retry for students when emails disabled
-        if (recipient.is_student && !isStudentEmailEnabled(notification.notification_type, notification.template_data ?? undefined)) {
+        // Student email kill switch: skip retry for students when emails
+        // disabled. A parent's copy (template_data.guardianFor) counts as student mail.
+        const templateData = (notification.template_data ?? undefined) as
+          Record<string, unknown> | undefined;
+        const isGuardianCopy = Boolean(templateData?.guardianFor);
+        if (
+          (recipient.is_student || isGuardianCopy) &&
+          !isStudentEmailEnabled(notification.notification_type, templateData)
+        ) {
           logInfo(
             `Skipping retry for student notification ${notification.id} — student emails disabled`
           );

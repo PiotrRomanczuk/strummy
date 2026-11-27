@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Billing tests on the real dev database - manual test report</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 980px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1c1917;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        margin-top: 2.2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+      }
+      code {
+        background: #f3efe6;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f3efe6;
+        padding: 0.7rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 4px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Billing tests on the real dev database</h1>
+    <p>
+      <b>Date</b>: 2026-11-25 &middot; <b>Branch</b>:
+      <code>chore/billing-tests-real-db</code> &middot; <b>Checked on</b>: Mac on the home LAN
+      against <code>StrummyDevelopment</code> (192.168.1.75:55321). No browser: this change is
+      tests, test harness and CI only, no product code.
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr>
+        <th>Part</th>
+        <th>Change</th>
+      </tr>
+      <tr>
+        <td>Harness</td>
+        <td>
+          <code>lib/testing/rls/next-request.ts</code> stands in for <code>next/headers</code> in
+          the RLS Jest project. <code>actAs(user)</code> signs the user in through
+          <code>@supabase/ssr</code> (the client the app uses) and serves the resulting session
+          cookies to <code>cookies()</code>, so a server action called from a test runs under that
+          user's real JWT. <code>next/cache</code> maps to a recorder
+          (<code>revalidatedPaths</code>). <code>seedRow</code> / <code>updateRow</code> seed with
+          the service role and throw on error.
+        </td>
+      </tr>
+      <tr>
+        <td>Billing reads</td>
+        <td>
+          <code>lib/services/billing/__tests__/billing-queries.rls.test.ts</code>: 11 tests of
+          <code>getLessonPackages</code>, <code>getBillingSettings</code>,
+          <code>getStudentBilling</code>, <code>getFamilyBilling</code>,
+          <code>getBillingSummary</code> as teacher A, teacher B, the student, the parent and
+          another student. These four modules had 0% coverage before.
+        </td>
+      </tr>
+      <tr>
+        <td>Billing writes</td>
+        <td>
+          <code>app/actions/__tests__/billing-purchases.rls.test.ts</code>: 19 tests of
+          <code>createPackagePurchase</code>, <code>markPackagePurchasePaid</code>,
+          <code>cancelPackagePurchase</code>, including five simultaneous "paid" clicks producing
+          one credit. Replaces the mocked <code>billing-purchases.test.ts</code> (deleted).
+        </td>
+      </tr>
+      <tr>
+        <td>CI</td>
+        <td>
+          <code>e2e.yml</code> job <code>rls</code> runs with <code>RLS_REQUIRED=1</code>: missing
+          credentials now fail global setup instead of turning every suite into
+          <code>describe.skip</code>. A second step fails the job when the JSON result shows zero
+          passed tests.
+        </td>
+      </tr>
+    </table>
+
+    <h2>What the real database showed that the mock could not</h2>
+    <ul>
+      <li>
+        A teacher sees only their own ledger rows for a student shared with another teacher: teacher
+        A's balance for A1 is 3, the student's own view is 5. The mock had no notion of who reads.
+      </li>
+      <li>
+        The "lesson held" ledger row comes from the real balance trigger
+        (<code>trg_lessons_sync_credit_entry</code>) when the lesson is set to COMPLETED; the reads
+        join it to the lesson date.
+      </li>
+      <li>
+        A parent of two children with different teachers sees, on one child's page, only that
+        child's teacher's price list, although RLS lets the parent read both.
+      </li>
+      <li>
+        The duplicate-credit protection is the database's partial unique index, not app code: with 5
+        parallel calls every call returns success and exactly one <code>+4</code> row exists.
+      </li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        On the LAN (or Tailscale), with <code>.env.local</code> pointing at the dev stack:
+        <pre>
+npx jest -c jest.config.rls.ts lib/services/billing app/actions/__tests__/billing-purchases.rls.test.ts</pre>
+        Expected: 2 suites, 30 tests passed; no "left N users behind" warning.
+      </li>
+      <li>
+        Prove the suites can fail: in <code>app/actions/billing-purchases.ts</code> change
+        <code>if (creditError &amp;&amp; creditError.code !== UNIQUE_VIOLATION)</code> to
+        <code>if (creditError)</code> and rerun. Expected: 2 failures (five simultaneous clicks,
+        retry after success). Revert.
+      </li>
+      <li>
+        Prove the CI gate: blank the keys and require the database:
+        <pre>
+RLS_REQUIRED=1 RLS_TEST_SERVICE_ROLE_KEY= SUPABASE_SERVICE_ROLE_KEY= SUPABASE_LOCAL_SERVICE_ROLE_KEY= npx jest -c jest.config.rls.ts lib/services/billing</pre>
+        Expected: exit 1, "Got error running globalSetup … RLS_REQUIRED=1 but no RLS database
+        credentials". The same command without <code>RLS_REQUIRED=1</code>: 11 skipped, exit 0
+        (unchanged local behaviour).
+      </li>
+      <li>
+        Check the dev stack is clean afterwards: no auth users
+        <code>rls-*@guitarcrm.local</code> from the run remain (global teardown sweeps by run id and
+        fails the run if it cannot).
+      </li>
+    </ol>
+
+    <h2>Results (2026-11-25)</h2>
+    <ul>
+      <li>
+        Billing reads: 11/11 passed. Two deliberately wrong expectations (balance 4, open amount
+        232001) both failed with the real values (3, 232000).
+      </li>
+      <li>
+        Billing writes: 19/19 passed after making the student fixture a non-demo account. The
+        duplicate-credit mutation was caught by 2 tests.
+      </li>
+      <li>
+        <code>RLS_REQUIRED=1</code> without keys: globalSetup error, exit 1. Without the flag: 11
+        skipped, exit 0. The JSON check script printed
+        <code>passed 11, failed 0, skipped 0</code> on a real run.
+      </li>
+      <li>
+        <code>npm run lint</code> 0 errors, <code>npm run typecheck</code> clean,
+        <code>npm run test:ci</code> (unit + coverage thresholds) green.
+      </li>
+    </ul>
+
+    <h2>Limits</h2>
+    <ul>
+      <li>
+        These suites run only where the dev database is reachable: the Mac on LAN/Tailscale and the
+        self-hosted runner (<code>rls</code> job). GitHub-hosted <code>ci.yml</code> no longer
+        exercises <code>billing-purchases.ts</code>.
+      </li>
+      <li>
+        Infrastructure-error branches (a failed insert or update that is not a constraint violation)
+        are not provoked on the real database; they stay uncovered.
+      </li>
+    </ul>
+  </body>
+</html>

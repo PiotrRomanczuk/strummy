@@ -1,0 +1,11 @@
+[Unit]
+Description=Strummy Nightly E2E — daytime check, runs only when dev or the dev schema changed
+
+[Timer]
+OnCalendar=*-*-* 09,15,21:17:00 Europe/Warsaw
+AccuracySec=1min
+# No Persistent: a missed check is covered by the next one.
+Unit=strummy-nightly-e2e@daytime.service
+
+[Install]
+WantedBy=timers.target

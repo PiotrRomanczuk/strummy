@@ -1,0 +1,15 @@
+# Serves the review galleries (scripts/review/run-review.sh) on uwh's LAN
+# address only — screenshots of the anonymised production copy never go to a
+# public host. Install: scripts/review/README.md.
+[Unit]
+Description=Strummy review galleries (LAN only, read-only static files)
+After=network-online.target
+
+[Service]
+ExecStartPre=/usr/bin/mkdir -p %h/strummy-review
+ExecStart=/usr/bin/python3 -m http.server 9877 --bind 192.168.1.75 --directory %h/strummy-review
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

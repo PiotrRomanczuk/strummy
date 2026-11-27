@@ -80,13 +80,14 @@ echo "$PATH $METHOD: $RESPONSE (${DURATION}ms)"
 
 Test each endpoint with all 4 auth states:
 
-| Endpoint | Admin | Teacher | Student | Anonymous |
-|----------|-------|---------|---------|-----------|
-| GET /api/lessons | 200 | 200 | 200 | 401 |
-| POST /api/admin/users | 200 | 403 | 403 | 401 |
-| GET /api/student/lessons | 200 | 200 | 200 | 401 |
+| Endpoint                 | Admin | Teacher | Student | Anonymous |
+| ------------------------ | ----- | ------- | ------- | --------- |
+| GET /api/lessons         | 200   | 200     | 200     | 401       |
+| POST /api/admin/users    | 200   | 403     | 403     | 401       |
+| GET /api/student/lessons | 200   | 200     | 200     | 401       |
 
 Flag unexpected access patterns:
+
 - Student accessing admin endpoints (should be 403)
 - Anonymous accessing protected endpoints (should be 401)
 - 500 errors (server issues)
@@ -105,60 +106,66 @@ SCHEMA_FILE=$(find schemas -name "*.ts" | xargs grep -l "endpoint_name")
 
 ## API Categories
 
-| Category | Base Path | Endpoints | Auth Required |
-|----------|-----------|-----------|---------------|
-| Admin | `/api/admin/` | users, lessons, drive-sync, drive-videos, set-passwords | Admin only |
-| Lessons | `/api/lessons/` | CRUD, bulk, search, export, stats | All roles |
-| Songs | `/api/song/` | CRUD, favorites, videos, stats, export | All roles |
-| Assignments | `/api/assignments/` | CRUD | Teacher, Student |
-| Spotify | `/api/spotify/` | sync, search, matches, features | Admin, Teacher |
-| Drive | `/api/drive/` | files, upload, stream | Admin, Teacher |
-| Notifications | `/api/notifications/` | dashboard, unsubscribe | All roles |
-| Stats | `/api/stats/`, `/api/dashboard/` | weekly, dashboard, performance | All roles |
-| Cohorts | `/api/cohorts/` | analytics | Admin, Teacher |
-| Exports | `/api/exports/` | student data | Admin, Teacher |
-| Cron | `/api/cron/` | 12 scheduled jobs | CRON_SECRET |
-| Auth | `/api/auth/`, `/api/oauth2/` | Google OAuth | Public |
-| External | `/api/external/` | database status, songs | API key |
+| Category      | Base Path                        | Endpoints                                | Auth Required    |
+| ------------- | -------------------------------- | ---------------------------------------- | ---------------- |
+| Admin         | `/api/admin/`                    | users, lessons, drive-sync, drive-videos | Admin only       |
+| Lessons       | `/api/lessons/`                  | CRUD, bulk, search, export, stats        | All roles        |
+| Songs         | `/api/song/`                     | CRUD, favorites, videos, stats, export   | All roles        |
+| Assignments   | `/api/assignments/`              | CRUD                                     | Teacher, Student |
+| Spotify       | `/api/spotify/`                  | sync, search, matches, features          | Admin, Teacher   |
+| Drive         | `/api/drive/`                    | files, upload, stream                    | Admin, Teacher   |
+| Notifications | `/api/notifications/`            | dashboard, unsubscribe                   | All roles        |
+| Stats         | `/api/stats/`, `/api/dashboard/` | weekly, dashboard, performance           | All roles        |
+| Cohorts       | `/api/cohorts/`                  | analytics                                | Admin, Teacher   |
+| Exports       | `/api/exports/`                  | student data                             | Admin, Teacher   |
+| Cron          | `/api/cron/`                     | 12 scheduled jobs                        | CRON_SECRET      |
+| Auth          | `/api/auth/`, `/api/oauth2/`     | Google OAuth                             | Public           |
+| External      | `/api/external/`                 | database status, songs                   | API key          |
 
 ## Output Format
 
 ```markdown
 # API Health Check Report
+
 **Environment**: localhost:3000 | **Date**: {timestamp}
 **Endpoints tested**: {count} | **Methods tested**: {count}
 
 ## Summary
-| Status | Count | Percentage |
-|--------|-------|------------|
-| Healthy (2xx) | 85 | 77% |
-| Auth Required (401) | 15 | 14% |
-| Forbidden (403) | 8 | 7% |
-| Errors (5xx) | 2 | 2% |
+
+| Status              | Count | Percentage |
+| ------------------- | ----- | ---------- |
+| Healthy (2xx)       | 85    | 77%        |
+| Auth Required (401) | 15    | 14%        |
+| Forbidden (403)     | 8     | 7%         |
+| Errors (5xx)        | 2     | 2%         |
 
 ## Performance
-| Metric | Value |
-|--------|-------|
-| Average response time | 145ms |
-| Slowest endpoint | GET /api/lessons/stats/advanced (890ms) |
-| Fastest endpoint | GET /api/external/database/status (12ms) |
-| Endpoints > 500ms | 3 |
+
+| Metric                | Value                                    |
+| --------------------- | ---------------------------------------- |
+| Average response time | 145ms                                    |
+| Slowest endpoint      | GET /api/lessons/stats/advanced (890ms)  |
+| Fastest endpoint      | GET /api/external/database/status (12ms) |
+| Endpoints > 500ms     | 3                                        |
 
 ## Auth Matrix Issues
+
 - GET /api/admin/users: Student gets 200 (expected 403)
 - POST /api/lessons: Anonymous gets 200 (expected 401)
 
 ## Failing Endpoints
-| Endpoint | Method | Status | Error |
-|----------|--------|--------|-------|
-| /api/cron/dispatcher | GET | 500 | Missing CRON_SECRET |
-| /api/spotify/sync | POST | 503 | Spotify API unavailable |
+
+| Endpoint             | Method | Status | Error                   |
+| -------------------- | ------ | ------ | ----------------------- |
+| /api/cron/dispatcher | GET    | 500    | Missing CRON_SECRET     |
+| /api/spotify/sync    | POST   | 503    | Spotify API unavailable |
 
 ## Schema Compliance
-| Endpoint | Schema | Valid | Issues |
-|----------|--------|-------|--------|
-| GET /api/lessons | LessonSchema | Yes | -- |
-| GET /api/song | SongSchema | No | Missing 'level' field |
+
+| Endpoint         | Schema       | Valid | Issues                |
+| ---------------- | ------------ | ----- | --------------------- |
+| GET /api/lessons | LessonSchema | Yes   | --                    |
+| GET /api/song    | SongSchema   | No    | Missing 'level' field |
 ```
 
 ## Curl Command Generation
@@ -174,12 +181,12 @@ curl -v \
 
 ## Performance Thresholds
 
-| Rating | Response Time |
-|--------|--------------|
-| Fast | < 100ms |
-| Normal | 100-500ms |
-| Slow | 500ms-2s |
-| Critical | > 2s |
+| Rating   | Response Time |
+| -------- | ------------- |
+| Fast     | < 100ms       |
+| Normal   | 100-500ms     |
+| Slow     | 500ms-2s      |
+| Critical | > 2s          |
 
 ## Error Handling
 

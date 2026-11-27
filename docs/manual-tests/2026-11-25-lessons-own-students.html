@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lessons only with own students - manual test report</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 980px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1c1917;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        margin-top: 2.2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+      }
+      code {
+        background: #f3efe6;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f3efe6;
+        padding: 0.7rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 4px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Lessons only with own students</h1>
+    <p>
+      <b>Date</b>: 2026-11-25 &middot; <b>Branch</b>: <code>fix/lesson-own-students</code> (stacked
+      on <code>chore/lesson-assignment-tests-real-db</code>, PR #1196) &middot; <b>Decision</b>:
+      owner, 2026-11-25 &middot; <b>Checked on</b>: Mac on the home LAN against
+      <code>StrummyDevelopment</code>, migration applied there.
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr>
+        <th>Part</th>
+        <th>Change</th>
+      </tr>
+      <tr>
+        <td>Rule</td>
+        <td>
+          A teacher gives a lesson to a student they already teach (a non-deleted lesson together),
+          or to a student nobody teaches yet (a new student's first lesson). An admin is not
+          restricted.
+        </td>
+      </tr>
+      <tr>
+        <td>Migration <code>20261125200000_lessons_own_students.sql</code></td>
+        <td>
+          New <code>public.may_teach_student(uuid)</code> (SECURITY DEFINER, executable by
+          <code>authenticated</code> and <code>service_role</code> only). The
+          <code>lessons_insert_teacher</code> policy and the WITH CHECK of
+          <code>lessons_update_teacher</code> call it. That covers every teacher-side path that
+          writes lessons with the caller's client: the lesson form, <code>/api/lessons</code>, bulk,
+          schedule and recurring. Classified <b>additive</b> by <code>migrate-db.sh classify</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><code>createLessonAction</code></td>
+        <td>
+          When the policy refuses the insert, the form gets "You can only schedule lessons with your
+          own students" instead of the raw RLS message.
+        </td>
+      </tr>
+      <tr>
+        <td>Types</td>
+        <td>
+          <code>database.types.ts</code> regenerated from dev (<code>npm run db:types</code>) for
+          the new function.
+        </td>
+      </tr>
+    </table>
+
+    <h2>Tests (real dev database)</h2>
+    <ul>
+      <li>
+        <code>lessons.rls.test.ts</code>: a direct insert for another teacher's student is refused
+        (42501). Moving an own lesson to that student is refused, and the lesson keeps its student.
+        A further lesson for an own student and a first lesson for a new student both work.
+      </li>
+      <li>
+        <code>lesson-edit.rls.test.ts</code>: the form refuses another teacher's student, whether
+        picked by id or typed by email, and writes nothing. A new student's email still creates a
+        shadow profile and the first lesson (intake unchanged).
+      </li>
+      <li>
+        Before the migration was applied, exactly the four "refused" tests failed and the intake
+        test passed. With the migration applied, all pass.
+      </li>
+    </ul>
+
+    <h2>How to test manually</h2>
+    <ol>
+      <li>
+        Apply the migration to the dev stack, if <code>deploy-db.yml</code> has not done it yet:
+        <pre>
+ssh elite 'docker exec -i supabase_db_StrummyDevelopment psql -U postgres -d postgres' &lt; supabase/migrations/20261125200000_lessons_own_students.sql</pre>
+      </li>
+      <li>
+        Run the suites:
+        <pre>
+npx jest -c jest.config.rls.ts lib/testing/rls/__tests__/lessons.rls.test.ts app/actions/__tests__/lesson-edit.rls.test.ts</pre>
+        Expected: all pass.
+      </li>
+      <li>
+        In the app (dev, teacher account): create a lesson with a student from the picker. It works
+        as before, because the picker lists only your own students. Type the email of a brand-new
+        student: a shadow student and the lesson are created. Type the email of a student who has
+        lessons only with another teacher: the form shows "You can only schedule lessons with your
+        own students".
+      </li>
+      <li>As admin: creating a lesson for any student still works.</li>
+    </ol>
+
+    <h2>Results (2026-11-25)</h2>
+    <ul>
+      <li>
+        Dry run of the migration in a rolled-back transaction on dev: both policies recreated with
+        the new check. Then applied for real.
+      </li>
+      <li>
+        RLS suites: see the PR description for counts. Gates: lint, typecheck, unit with coverage,
+        structure check.
+      </li>
+    </ul>
+
+    <h2>Limits</h2>
+    <ul>
+      <li>
+        Service-role writers (calendar import, Cal.com webhook, transcript drafts) bypass RLS by
+        design and are not limited by this policy.
+      </li>
+      <li>
+        Two teachers can still share a student when the second one got the student first through
+        admin or service-role paths. The rule stops a teacher from taking over; it does not split
+        existing pairs.
+      </li>
+    </ul>
+  </body>
+</html>

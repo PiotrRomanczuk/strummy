@@ -86,6 +86,11 @@ jest.mock('next/navigation', () => ({
 // Mock next/server to avoid requiring global Response/Request in skipped route tests
 jest.mock('next/server', () => {
   return {
+    // Runs the task at once: a test sees its effects without a response lifecycle.
+    after: (task) => {
+      const run = typeof task === 'function' ? task() : task;
+      Promise.resolve(run).catch(() => {});
+    },
     NextRequest: class {
       constructor(url, init) {
         this.url = url;

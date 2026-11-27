@@ -1,53 +1,126 @@
 name: Deploy DB
 
-# Applies new supabase/migrations to StrummyDevelopment and StudentProduction
-# after they reach main, then proves prod == dev. The final job, "DB ready for
-# production", is the Vercel Deployment Check: a production build of a commit is
-# not aliased to strummy.online until the database it needs exists.
+# Every long-lived branch has its own database on uwh, and a migration reaches
+# a database when it lands on that database's branch (.claude/rules/branch-safety.md):
+#
+#   push to dev  → StrummyDevelopment  migrate-db.sh dev apply
+#   push to test → StrummyTest         migrate-db.sh test apply, then StrummyTest == test's migrations
+#   push to main → StudentProduction   migrate-db.sh prod apply, then production == main's migrations
+#
+# The final job, "DB ready for production", is the Vercel Deployment Check: a
+# production build of a main commit is not aliased to strummy.online until the
+# database it needs exists.
 #
 # Why: until 2026-10-19 this step was a human remembering `psql < file` on uwh.
 # #901 merged lesson_transcripts on 2026-10-14 and nobody applied it to prod;
 # db-parity went red on every main commit and nothing was blocked, because it
 # is not a merge gate. Analysis: vault analysis/2026-10-19-strummy-prod-schema-drift.md
 #
-# Additive migrations apply on their own. A file migrate-db.sh flags as
-# destructive (drop table/column/type, rename, column type change, truncate,
-# delete from) waits for a human to approve the `production-db` environment.
+# Destructive files (drop table/column/type, rename, column type change,
+# truncate, delete from — see migrate-db.sh) wait for a human on the
+# `production-db` environment before production. On dev and test they apply on
+# their own: dev keeps a pg_dump from just before (~/backups on uwh), test is
+# rebuilt from production's backup anyway, and production — the one database
+# where a deletion costs something — still asks.
+#
+# Until 2026-11-15 main also migrated dev first as a canary and then required
+# prod == dev. With dev ahead of production by design, that compare can only be
+# red; the canary is now the test database, an anonymised copy of production
+# that gets every migration before main does.
 
 on:
   push:
-    branches: [main]
-  # A bot-merged PR produces no push run (Actions' recursion guard — see
-  # README, release-train). The schedule makes sure main HEAD still gets its
-  # check; with nothing pending it finishes in seconds.
+    branches: [dev, test, main]
+  # Merges are ordinary pushes since 2026-11-13 (pr_decide.py merges with the
+  # owner's `gh` login), so `push` covers them. The hourly schedule (was every
+  # 30 min: 35 of 35 scheduled runs had nothing to apply) is the fallback for a
+  # merge made with a GITHUB_TOKEN, whose push starts no workflow; with nothing
+  # pending it finishes in seconds. It runs on main only (GitHub schedules the
+  # default branch) — dev and test catch up on their next push, or by hand:
+  # gh workflow run deploy-db.yml --ref dev
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      max_pending:
+        # migrate-db.sh refuses more than 10 pending files: usually that means the
+        # bookkeeping is behind the schema. A release that really carries more
+        # (2026-11-22: 11 after eight days of queued PRs) is run by hand with the
+        # count from the plan — pushes and the schedule keep the default.
+        description: 'Largest batch of pending migrations to accept (default 10)'
+        required: false
+        default: '10'
 
+# Per branch: dev, test and main deploy to different databases and never wait
+# on each other. Within a branch, runs queue instead of overlapping.
 concurrency:
-  group: deploy-db
+  group: deploy-db-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
+# An explicit `bash` runs with -o pipefail; the implicit default does not, and
+# `migrate-db.sh … | tee` would then pass when the migration failed.
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Not the e2e.yml replay job's scratch database: the two may run at once.
+  MIGRATION_SHADOW_DB: strummy_deploy_shadow
+  MIGRATE_MAX_PENDING: ${{ inputs.max_pending || '10' }}
+
 jobs:
-  plan:
-    name: Plan migrations
+  branch-db:
+    name: Apply migrations (${{ github.ref_name }})
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/test'
     runs-on: [self-hosted, e2e-light]
-    timeout-minutes: 5
-    outputs:
-      destructive: ${{ steps.prod.outputs.destructive }}
-      pending: ${{ steps.prod.outputs.pending }}
+    timeout-minutes: 20
+    env:
+      TARGET: ${{ github.ref_name }} # dev | test — the same names migrate-db.sh takes
+      MIGRATE_ALLOW_DESTRUCTIVE: 'true'
     steps:
       # Own subdirectory: a root checkout would git-clean the shared workspace.
       - uses: actions/checkout@v7
         with:
           path: deploy-db
           clean: false
-      - name: Dev
+      - name: Apply
         working-directory: deploy-db
-        run: bash scripts/e2e-remote/migrate-db.sh dev plan
+        run: bash scripts/e2e-remote/migrate-db.sh "$TARGET" apply | tee -a "$GITHUB_STEP_SUMMARY"
+      # Not for dev: a PR may apply its own migration to the shared dev stack
+      # before it merges (migrations.md, rule 6), so dev legitimately holds
+      # files its branch does not have yet. The PR checks compare dev instead.
+      - name: StrummyTest == the test branch's migrations
+        if: github.ref == 'refs/heads/test'
+        working-directory: deploy-db
+        env:
+          REPLAY_COMPARE_CONTAINER: supabase_db_StrummyTest
+        run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
+      - name: Upload replay diff
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: migration-replay-diff-${{ github.ref_name }}
+          path: |
+            deploy-db/migration-replay.diff
+            deploy-db/migration-replay.log
+          retention-days: 14
+
+  plan:
+    name: Plan migrations
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, e2e-light]
+    timeout-minutes: 5
+    outputs:
+      destructive: ${{ steps.prod.outputs.destructive }}
+      pending: ${{ steps.prod.outputs.pending }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: deploy-db
+          clean: false
       - id: prod
         name: Production
         working-directory: deploy-db
@@ -58,21 +131,20 @@ jobs:
     needs: plan
     if: needs.plan.outputs.destructive != 'true'
     runs-on: [self-hosted, e2e-light]
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
           path: deploy-db
           clean: false
-      - name: Apply to development (canary)
-        working-directory: deploy-db
-        run: bash scripts/e2e-remote/migrate-db.sh dev apply
       - name: Apply to production
         working-directory: deploy-db
         run: bash scripts/e2e-remote/migrate-db.sh prod apply
-      - name: Production schema == development
+      - name: Production == main's migrations
         working-directory: deploy-db
-        run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
+        env:
+          REPLAY_COMPARE_CONTAINER: supabase_db_StudentProduction
+        run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
 
   migrate-approved:
     name: Apply migrations (approved destructive)
@@ -81,7 +153,7 @@ jobs:
     runs-on: [self-hosted, e2e-light]
     # Required reviewer is configured on the environment (Settings → Environments).
     environment: production-db
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       MIGRATE_ALLOW_DESTRUCTIVE: 'true'
     steps:
@@ -101,21 +173,20 @@ jobs:
         with:
           path: deploy-db
           clean: false
-      - name: Apply to development (canary)
-        working-directory: deploy-db
-        run: bash scripts/e2e-remote/migrate-db.sh dev apply
       - name: Apply to production
         working-directory: deploy-db
         run: bash scripts/e2e-remote/migrate-db.sh prod apply
-      - name: Production schema == development
+      - name: Production == main's migrations
         working-directory: deploy-db
-        run: bash scripts/e2e-remote/check-db-parity.sh schema-parity.diff
+        env:
+          REPLAY_COMPARE_CONTAINER: supabase_db_StudentProduction
+        run: bash scripts/e2e-remote/check-migrations-replay.sh migration-replay.diff
 
   ready:
     # This exact name is the Vercel Deployment Check — rename both or neither.
     name: DB ready for production
     needs: [plan, migrate, migrate-approved]
-    if: always()
+    if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

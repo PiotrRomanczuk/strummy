@@ -127,12 +127,15 @@ export async function signIn(email: string, password: string) {
  */
 async function findClaimableProfile(email: string): Promise<boolean> {
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from('profiles')
-    .select('id')
-    .or(`invite_email.eq.${email},email.eq.${email}`)
-    .is('user_id', null)
-    .limit(1);
+  // Two exact lookups: the address is untrusted form input, and inside an
+  // `.or()` filter a `,` or `)` in it would change which rows match.
+  const lookups = await Promise.all(
+    (['invite_email', 'email'] as const).map((column) =>
+      admin.from('profiles').select('id').eq(column, email).is('user_id', null).limit(1)
+    )
+  );
+  const error = lookups.find((result) => result.error)?.error;
+  const data = lookups.flatMap((result) => result.data ?? []);
 
   if (error) {
     // Fail closed. An unreadable profiles table must not become an open door.
@@ -272,8 +275,10 @@ export async function resetPassword(email: string) {
     return { error: 'Configuration error: Could not determine site origin' };
   }
 
+  // Plain /auth/callback: GoTrue matches redirect URLs exactly, so a `?next=`
+  // query is rejected. The callback recognises the recovery session itself.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/auth/callback`,
   });
 
   if (error) {

@@ -34,9 +34,9 @@ jest.mock('next/server', () => {
   }
   return { NextResponse: MockNextResponse, NextRequest: MockNextRequest };
 });
-import { sendWeeklyInsights } from '@/app/actions/email/send-weekly-insights';
+import { sendWeeklyInsights } from '@/lib/email/send-weekly-insights';
 
-jest.mock('@/app/actions/email/send-weekly-insights', () => ({
+jest.mock('@/lib/email/send-weekly-insights', () => ({
   sendWeeklyInsights: jest.fn(),
 }));
 
@@ -100,5 +100,6 @@ describe('GET /api/cron/weekly-insights', () => {
   it('returns 401 without a valid cron secret', async () => {
     const res = await GET(new NextRequest('http://localhost/api/cron/weekly-insights'));
     expect(res.status).toBe(401);
+    expect(sendWeeklyInsights).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Song techniques (#1206) — manual test</title>
+<style>body{font:15px/1.55 -apple-system,system-ui,sans-serif;max-width:960px;margin:2rem auto;padding:0 1rem}pre,code{font:12.5px ui-monospace,Menlo,monospace;background:#f2f2f4;border-radius:4px}pre{padding:.75rem;overflow-x:auto}td,th{border-bottom:1px solid #ddd;padding:.3rem .5rem;text-align:left}table{border-collapse:collapse}.warn{border-left:4px solid #c60;padding:.5rem 1rem;background:#fff6ec}</style></head><body>
+<p>2026-11-26</p>
+<h1>Song techniques (#1206, part of #1146) — manual test</h1>
+<div class="warn"><strong>No browser run was possible.</strong> The table <code>song_techniques</code> is not on the dev database yet (the migration lands there when this PR merges into <code>dev</code>), so the card and the filter were checked only by unit and component tests. The RLS test was written but not run for the same reason.</div>
+<h2>What was built</h2>
+<ul>
+<li><strong>Table <code>song_techniques</code></strong> (additive migration <code>20261126140000</code>): per song the total note count and a count per technique. Any signed-in user can read the labels of a song they can read (the policy looks the song up under the <code>songs</code> policies, so it is never wider than <code>songs</code>); only teachers and admins write; anon has no access.</li>
+<li><strong>Rule</strong> (<code>lib/music-theory/song-techniques.ts</code>): a song has a technique with at least 8 marks and 1% of its notes, or at least 25 marks. Strength from the share of notes: under 3% a little, 3-10% regular, 10% and more a lot. Left out of chips and filter: stroke_down, stroke_up and the minor techniques ghost, grace, staccato, whammy, trill, tremolo_picking.</li>
+<li><strong>Loader</strong> <code>scripts/backfill/2026-11-song-techniques.ts --file &lt;jsonl&gt; (--validateOnly | --commit) [--remote]</code>: validates each line, skips unknown and deleted songs, upserts on <code>song_id</code>, prints a JSON summary.</li>
+<li><strong>Song page</strong>: card "Techniki w utworze" / "Techniques in the song" with a chip per technique and its strength, for staff and students; nothing when the song has no row.</li>
+<li><strong>Songs list</strong>: "Technique" select next to the key select; the URL carries <code>?technique=slide</code>; the level and genre counts follow it.</li>
+</ul>
+<h2>How to test by hand (after the migration is on dev and labels are loaded)</h2>
+<ol>
+<li>Run the loader with <code>--validateOnly</code> against dev; check the summary (loaded / skipped counts, problems).</li>
+<li>Run with <code>--commit</code>. Open a song that has labels as a teacher and as a student: the card shows chips ordered by density, with the explanation line.</li>
+<li>Open a song without labels: no card at all.</li>
+<li>Open <code>/dashboard/songs</code>, pick a technique: the list narrows to songs with that technique; "Any technique" restores it; other filters (level, key, author, search) still combine with it; reload keeps the choice.</li>
+<li>Switch the language to Polish: names read Hammer-on i pull-off, Slide, Podciągnięcia, Vibrato, Wybrzmiewanie (arpeggio), Nuty tłumione, Palm mute, Flażolety, Tapping, Triole.</li>
+</ol>
+<h2>What was run</h2>
+<ul>
+<li>Unit: rule, loader core. Component: card, filter select, list href. RLS: <code>song-techniques.rls.test.ts</code> (<strong>not run</strong>, needs the table on dev).</li>
+</ul>
+</body></html>

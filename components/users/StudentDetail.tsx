@@ -5,13 +5,15 @@ import type {
   StudentRepertoireRow,
 } from '@/lib/services/student-detail-queries';
 import type { PracticeDay } from '@/lib/services/student-health.helpers';
-import { computeHealth, latestPracticedAt } from '@/lib/services/student-health.helpers';
+import { computeHealth, latestOf, latestPracticedAt } from '@/lib/services/student-health.helpers';
 import type { NextLesson, PracticeSessionRow } from '@/lib/services/student-health-queries';
 import type { Skill, StudentSkill } from '@/app/actions/student-skills';
 
 import { SHOW_PRACTICE_FEATURES } from '@/lib/config/features';
 
 import type { StudentFeature } from '@/lib/config/student-features';
+import type { StudentBilling } from '@/lib/services/billing/student-billing-queries';
+import type { StudentParent } from '@/lib/services/student-parent-queries';
 import { StudentDetailBody } from './StudentDetail.Body';
 import { StudentDetailHeader } from './StudentDetail.Header';
 import { attendancePct, practiceStreak } from './student-detail-stats.helpers';
@@ -33,6 +35,10 @@ type Props = {
   studentSkills?: StudentSkill[];
   availableSkills?: Skill[];
   enabledFeatures?: StudentFeature[];
+  /** Staff only — the "Rozliczenia" tab. */
+  billing?: StudentBilling | null;
+  /** Staff only — the "Parent or guardian" card. */
+  parent?: StudentParent | null;
 };
 
 export const StudentDetail = ({
@@ -48,9 +54,15 @@ export const StudentDetail = ({
   studentSkills = [],
   availableSkills = [],
   enabledFeatures = [],
+  billing = null,
+  parent = null,
 }: Props) => {
   const now = new Date();
-  const health = computeHealth(latestPracticedAt(repertoire), now);
+  const lastPracticed = latestOf(
+    latestPracticedAt(repertoire),
+    ...practiceSessions.map((s) => s.createdAt)
+  );
+  const health = computeHealth(lastPracticed, now, profile.createdAt);
   const past = lessons.filter((l) => Date.parse(l.scheduledAt) < now.getTime());
 
   return (
@@ -90,6 +102,8 @@ export const StudentDetail = ({
         studentSkills={studentSkills}
         availableSkills={availableSkills}
         enabledFeatures={enabledFeatures}
+        billing={billing}
+        parent={parent}
         isAtRisk={SHOW_PRACTICE_FEATURES && health.status === 'at_risk'}
       />
     </div>

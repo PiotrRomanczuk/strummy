@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { DataList, type DataListColumn } from '@/components/shared/DataList';
@@ -12,6 +13,8 @@ interface RepertoireProps {
   /** True when the viewer owns this repertoire (student self-edit notes/difficulty). */
   canEdit: boolean;
   filters: RepertoireFilters;
+  /** Set when the teacher turned the chord map on for this student. */
+  chordMapHref?: string;
 }
 
 /** Title · Author · Stage · Last practised · notes toggle. */
@@ -25,7 +28,7 @@ const TEMPLATE = '1fr 200px 120px 130px 110px';
  * open textareas and 31 hydrated client components stacked down the page.
  * Notes and difficulty now sit behind a per-row toggle; nothing was removed.
  */
-export async function Repertoire({ entries, canEdit, filters }: RepertoireProps) {
+export async function Repertoire({ entries, canEdit, filters, chordMapHref }: RepertoireProps) {
   const t = await getTranslations('Repertoire');
   const tSongs = await getTranslations('Songs');
 
@@ -76,6 +79,14 @@ export async function Repertoire({ entries, canEdit, filters }: RepertoireProps)
                 count: entries.length,
               })}
         </p>
+        {chordMapHref && (
+          <Link
+            href={chordMapHref}
+            className="mt-2 inline-block text-sm font-medium text-[var(--gold-2)] no-underline hover:underline"
+          >
+            {t('chordMapLink')}
+          </Link>
+        )}
       </div>
 
       <RepertoireFiltersBar filters={filters} counts={counts} />

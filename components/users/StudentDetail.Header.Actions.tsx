@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Calendar, Download, Mail } from 'lucide-react';
+import { Calendar, Download, Grid3x3, Mail } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import type { StudentProfile } from '@/lib/services/student-detail-queries';
@@ -95,6 +95,12 @@ export const HeaderActions = async ({
           }}
         >
           <Download size={13} aria-hidden="true" /> {t('detailImportSongsLink')}
+        </Link>
+        <Link
+          href={`/dashboard/users/${profile.id}/chord-map`}
+          className="inline-flex items-center gap-1.5 text-[var(--ink-3)] no-underline hover:text-[var(--ink)]"
+        >
+          <Grid3x3 size={13} aria-hidden="true" /> {t('detailChordMapLink')}
         </Link>
         {profile.isShadow && <DeleteShadowButton userId={profile.id} />}
       </div>

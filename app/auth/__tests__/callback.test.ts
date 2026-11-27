@@ -114,6 +114,18 @@ function redirectLocationOf(response: {
   return response.headers.get('Location') ?? response.headers.get('location') ?? '';
 }
 
+/** An access token whose `amr` claim says how the session was created. */
+function tokenWithAmr(method: string): string {
+  const payload = Buffer.from(JSON.stringify({ amr: [{ method, timestamp: 1 }] })).toString(
+    'base64url'
+  );
+  return `header.${payload}.signature`;
+}
+
+function sessionFrom(method: string) {
+  return { data: { session: { access_token: tokenWithAmr(method) } }, error: null };
+}
+
 /** Sets up mocks for a user that already has a role (teacher). */
 function mockAuthenticatedUserWithRole(userId = 'user-abc') {
   mockExchangeCodeForSession.mockResolvedValue({ error: null });
@@ -156,6 +168,35 @@ describe('GET /auth/callback', () => {
     process.env.NODE_ENV = 'development';
   });
 
+  // ── Password reset ──────────────────────────────────────────────────────────
+
+  it('sends a session from a reset link to /reset-password', async () => {
+    mockAuthenticatedUserWithRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('recovery'));
+
+    const response = await GET(buildRequest({ code: 'valid-code' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
+  });
+
+  it('reaches /reset-password even for an account without a role yet', async () => {
+    mockNewUserWithoutRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('recovery'));
+
+    const response = await GET(buildRequest({ code: 'valid-code' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
+  });
+
+  it('sends any other sign-in where it asked to go, not to the reset form', async () => {
+    mockAuthenticatedUserWithRole();
+    mockExchangeCodeForSession.mockResolvedValue(sessionFrom('oauth'));
+
+    const response = await GET(buildRequest({ code: 'valid-code', next: '/dashboard/songs' }));
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/dashboard/songs');
+  });
+
   // ── Happy paths ─────────────────────────────────────────────────────────────
 
   it('redirects to /dashboard when code is valid and user has a role', async () => {
@@ -170,12 +211,21 @@ describe('GET /auth/callback', () => {
 
   it('respects the `next` query param on successful auth', async () => {
     mockAuthenticatedUserWithRole();
-    const req = buildRequest({ code: 'valid-code', next: '/songs' });
+    const req = buildRequest({ code: 'valid-code', next: '/dashboard/songs?tab=mine' });
 
     const response = await GET(req);
 
     expect(response.status).toBe(307);
-    expect(redirectLocationOf(response)).toBe('http://localhost:3000/songs');
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/dashboard/songs?tab=mine');
+  });
+
+  it('keeps the password-reset target sent by the reset email', async () => {
+    mockAuthenticatedUserWithRole();
+    const req = buildRequest({ code: 'valid-code', next: '/reset-password' });
+
+    const response = await GET(req);
+
+    expect(redirectLocationOf(response)).toBe('http://localhost:3000/reset-password');
   });
 
   it('calls updateLastSignIn with the user id after successful exchange', async () => {
@@ -238,22 +288,60 @@ describe('GET /auth/callback', () => {
     expect(redirectLocationOf(response)).toBe('https://strummy.online/dashboard');
   });
 
+  it.each([
+    ['a production build served without TLS keeps http', 'http', 'http://localhost:3300/dashboard'],
+    [
+      'a proxy chain uses the scheme the visitor used',
+      'https, http',
+      'https://localhost:3300/dashboard',
+    ],
+    ['an unknown scheme falls back to https', 'ftp', 'https://localhost:3300/dashboard'],
+  ])('%s', async (_case, proto, expected) => {
+    process.env.NODE_ENV = 'production';
+    mockAuthenticatedUserWithRole();
+    const req = buildRequest(
+      { code: 'valid-code', next: '/dashboard' },
+      { 'x-forwarded-host': 'localhost:3300', 'x-forwarded-proto': proto }
+    );
+
+    expect(redirectLocationOf(await GET(req))).toBe(expected);
+  });
+
+  it('sends a new user without a role to onboarding on the scheme they used', async () => {
+    process.env.NODE_ENV = 'production';
+    mockNewUserWithoutRole();
+    const req = buildRequest(
+      { code: 'valid-code' },
+      { 'x-forwarded-host': 'localhost:3300', 'x-forwarded-proto': 'http' }
+    );
+
+    expect(redirectLocationOf(await GET(req))).toBe('http://localhost:3300/onboarding');
+  });
+
   // ── Security ────────────────────────────────────────────────────────────────
 
-  it('never redirects to an external domain: origin is always prepended to `next`', async () => {
-    // The route uses `${origin}${next}` so an absolute URL in `next` results in
-    // a malformed (non-navigable) URL, not a real open redirect.
+  it.each(['@evil.com', '//evil.com', 'https://evil.com', '/\\evil.com', '/sign-out'])(
+    'falls back to /dashboard on the same host for next=%s',
+    async (next) => {
+      mockAuthenticatedUserWithRole();
+      const response = await GET(buildRequest({ code: 'valid-code', next }));
+
+      const location = new URL(redirectLocationOf(response));
+      expect(location.host).toBe('localhost:3000');
+      expect(location.pathname).toBe('/dashboard');
+    }
+  );
+
+  it('keeps the forwarded host when `next` is not a same-origin path', async () => {
+    process.env.NODE_ENV = 'production';
     mockAuthenticatedUserWithRole();
-    const req = buildRequest({
-      code: 'valid-code',
-      next: 'https://evil.example.com',
-    });
+    const req = buildRequest(
+      { code: 'valid-code', next: '@evil.com' },
+      { 'x-forwarded-host': 'strummy.online' }
+    );
 
     const response = await GET(req);
-    const location = redirectLocationOf(response);
 
-    // Location must start with the request origin, never with the injected URL
-    expect(location).toMatch(/^http:\/\/localhost:3000/);
-    expect(location).not.toBe('https://evil.example.com');
+    expect(redirectLocationOf(response)).toBe('https://strummy.online/dashboard');
   });
 });

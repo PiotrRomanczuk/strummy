@@ -13,6 +13,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { render as rtlRender, RenderOptions } from '@testing-library/react';
 
 import enMessages from '@/messages/en.json';
+import plMessages from '@/messages/pl.json';
 import { resolveServerTree } from './resolve-async-server-components';
 
 function IntlWrapper({ children }: { children: ReactNode }) {
@@ -21,6 +22,19 @@ function IntlWrapper({ children }: { children: ReactNode }) {
       {children}
     </NextIntlClientProvider>
   );
+}
+
+function PolishWrapper({ children }: { children: ReactNode }) {
+  return (
+    <NextIntlClientProvider locale="pl" messages={plMessages} timeZone="Europe/Warsaw">
+      {children}
+    </NextIntlClientProvider>
+  );
+}
+
+/** Same as `renderWithIntl`, but under `pl` with messages/pl.json. */
+function renderPolish(ui: ReactNode, options?: Omit<RenderOptions, 'wrapper'>) {
+  return rtlRender(ui, { wrapper: PolishWrapper, ...options });
 }
 
 /**
@@ -41,4 +55,4 @@ async function renderServerTree(ui: ReactNode, options?: Omit<RenderOptions, 'wr
   return rtlRender(resolved, { wrapper: IntlWrapper, ...options });
 }
 
-export { renderWithIntl, renderServerTree, IntlWrapper };
+export { renderWithIntl, renderPolish, renderServerTree, IntlWrapper, PolishWrapper };

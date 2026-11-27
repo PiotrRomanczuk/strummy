@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rozliczenia: ja i dziecko — raport testów ręcznych</title>
+    <style>
+      body { font: 16px/1.55 system-ui, sans-serif; max-width: 820px; margin: 32px auto; padding: 0 16px; color: #1c1b19; background: #fbfaf6; }
+      h1 { font-size: 26px; } code { font: 13px ui-monospace, monospace; background: #f1eee5; border-radius: 4px; padding: 1px 4px; }
+      .ok { color: #2c6e3f; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Strona rozliczeń dla ucznia, który jest też rodzicem</h1>
+    <p>2026-11-16 · gałąź <code>fix/billing-page-student-parent</code> (na #1088) · issue #1095, część 2 · bez migracji</p>
+    <ul>
+      <li><code>/dashboard/billing</code> otwiera się na własnych rozliczeniach ucznia; zakładki „Ja” i imiona dzieci przełączają na rozliczenia dziecka (<code>?child=</code>, tylko dzieci tego konta). Konto tylko-rodzic działa jak dotąd.</li>
+      <li class="ok">E2E <code>tests/e2e/parent/student-parent-billing.spec.ts</code> na tymczasowym koncie: „Ja” aktywne i bez cudzego karnetu → klik w dziecko → nagłówek z imieniem dziecka i jego karnet do zapłaty. Razem z testami rozliczeń i rodzica: 13/13. Dane testowe usuwane w teście.</li>
+      <li class="ok">Test komponentu zakładek, <code>npm test</code>, lint bez nowych ostrzeżeń, <code>check:structure</code>.</li>
+    </ul>
+  </body>
+</html>

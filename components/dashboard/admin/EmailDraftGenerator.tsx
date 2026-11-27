@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,12 +22,14 @@ import { AIAssistButton } from '@/components/lessons/shared/AIAssistButton';
 import { AIStreamingStatus } from '@/components/ai';
 import { logger } from '@/lib/logger';
 
-const EMAIL_TYPE_LABELS: Record<string, string> = {
-  lesson_reminder: 'Lesson Reminder',
-  progress_report: 'Progress Report',
-  payment_reminder: 'Payment Reminder',
-  milestone_celebration: 'Milestone Celebration',
-};
+const EMAIL_TYPE_LABEL_KEYS = {
+  lesson_reminder: 'emailTypeLessonReminder',
+  progress_report: 'emailTypeProgressReport',
+  payment_reminder: 'emailTypePaymentReminder',
+  milestone_celebration: 'emailTypeMilestoneCelebration',
+} as const;
+
+type EmailType = keyof typeof EMAIL_TYPE_LABEL_KEYS;
 
 interface Student {
   id: string;
@@ -39,10 +42,9 @@ interface Props {
 }
 
 export function EmailDraftGenerator({ students }: Props) {
+  const t = useTranslations('AI');
   const [selectedStudent, setSelectedStudent] = useState<string>('');
-  const [templateType, setTemplateType] = useState<
-    'lesson_reminder' | 'progress_report' | 'payment_reminder' | 'milestone_celebration'
-  >('lesson_reminder');
+  const [templateType, setTemplateType] = useState<EmailType>('lesson_reminder');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [copied, setCopied] = useState(false);
@@ -120,7 +122,7 @@ export function EmailDraftGenerator({ students }: Props) {
 
   const handleCopy = async () => {
     try {
-      const emailText = `Subject: ${subject}\n\n${body}`;
+      const emailText = `${t('emailSubject')} ${subject}\n\n${body}`;
       await navigator.clipboard.writeText(emailText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -136,17 +138,17 @@ export function EmailDraftGenerator({ students }: Props) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="w-5 h-5 text-primary" />
-          AI Email Draft Generator
+          {t('emailTitle')}
         </CardTitle>
-        <CardDescription>Generate personalized emails for students using AI</CardDescription>
+        <CardDescription>{t('emailDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Student</Label>
+            <Label>{t('fieldStudent')}</Label>
             <Select value={selectedStudent} onValueChange={setSelectedStudent}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a student" />
+                <SelectValue placeholder={t('fieldStudentPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {students.map((student) => (
@@ -159,28 +161,23 @@ export function EmailDraftGenerator({ students }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label>Email Type</Label>
+            <Label>{t('emailTypeLabel')}</Label>
             <Select
               value={templateType}
-              onValueChange={(
-                value:
-                  | 'lesson_reminder'
-                  | 'progress_report'
-                  | 'payment_reminder'
-                  | 'milestone_celebration'
-              ) => setTemplateType(value)}
+              onValueChange={(value) => setTemplateType(value as EmailType)}
             >
               <SelectTrigger>
                 {/* Explicit children — see StudentProgressInsights: Radix can't
                     resolve the trigger label before SelectContent has mounted,
                     so a server-rendered select painted as an empty stub. */}
-                <SelectValue>{EMAIL_TYPE_LABELS[templateType] ?? 'Lesson Reminder'}</SelectValue>
+                <SelectValue>{t(EMAIL_TYPE_LABEL_KEYS[templateType])}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="lesson_reminder">Lesson Reminder</SelectItem>
-                <SelectItem value="progress_report">Progress Report</SelectItem>
-                <SelectItem value="payment_reminder">Payment Reminder</SelectItem>
-                <SelectItem value="milestone_celebration">Milestone Celebration</SelectItem>
+                {(Object.keys(EMAIL_TYPE_LABEL_KEYS) as EmailType[]).map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {t(EMAIL_TYPE_LABEL_KEYS[type])}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -190,7 +187,7 @@ export function EmailDraftGenerator({ students }: Props) {
         {templateType === 'lesson_reminder' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Lesson Date</Label>
+              <Label>{t('emailLessonDate')}</Label>
               <Input
                 type="date"
                 value={lessonDate}
@@ -198,7 +195,7 @@ export function EmailDraftGenerator({ students }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Lesson Time</Label>
+              <Label>{t('emailLessonTime')}</Label>
               <Input
                 type="time"
                 value={lessonTime}
@@ -206,7 +203,7 @@ export function EmailDraftGenerator({ students }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Songs to Practice</Label>
+              <Label>{t('emailSongsToPractice')}</Label>
               <Input
                 value={practiceSongs}
                 onChange={(e) => setPracticeSongs(e.target.value)}
@@ -218,18 +215,22 @@ export function EmailDraftGenerator({ students }: Props) {
 
         {templateType === 'payment_reminder' && (
           <div className="space-y-2">
-            <Label>Amount Due</Label>
-            <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="$100" />
+            <Label>{t('emailAmountDue')}</Label>
+            <Input
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={t('emailAmountPlaceholder')}
+            />
           </div>
         )}
 
         {templateType === 'milestone_celebration' && (
           <div className="space-y-2">
-            <Label>Achievement</Label>
+            <Label>{t('emailAchievement')}</Label>
             <Input
               value={achievement}
               onChange={(e) => setAchievement(e.target.value)}
-              placeholder="Completed first song"
+              placeholder={t('emailAchievementPlaceholder')}
             />
           </div>
         )}
@@ -237,7 +238,7 @@ export function EmailDraftGenerator({ students }: Props) {
         <AIAssistButton
           onClick={handleGenerate}
           disabled={!selectedStudent}
-          label="Generate Email Draft"
+          label={t('emailGenerate')}
           status={aiStream.status}
           tokenCount={aiStream.tokenCount}
           onCancel={aiStream.cancel}
@@ -266,7 +267,7 @@ export function EmailDraftGenerator({ students }: Props) {
                 <p className="font-medium">{selectedStudentData.full_name}</p>
                 <p className="text-sm text-muted-foreground">{selectedStudentData.email}</p>
               </div>
-              <Badge variant="secondary">{templateType.replace('_', ' ')}</Badge>
+              <Badge variant="secondary">{t(EMAIL_TYPE_LABEL_KEYS[templateType])}</Badge>
             </div>
           </div>
         )}
@@ -274,7 +275,7 @@ export function EmailDraftGenerator({ students }: Props) {
         {subject && body && (
           <div className="space-y-4 p-4 bg-muted rounded-lg border">
             <div className="flex justify-between items-center">
-              <h3 className="font-medium">Generated Email:</h3>
+              <h3 className="font-medium">{t('emailGenerated')}</h3>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -287,7 +288,7 @@ export function EmailDraftGenerator({ students }: Props) {
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
-                  {copied ? 'Copied!' : 'Copy'}
+                  {copied ? t('emailCopied') : t('emailCopy')}
                 </Button>
                 {selectedStudentData?.email && (
                   <Button
@@ -302,7 +303,7 @@ export function EmailDraftGenerator({ students }: Props) {
                     className="flex items-center gap-2"
                   >
                     <Send className="w-4 h-4" />
-                    Send
+                    {t('emailSend')}
                   </Button>
                 )}
               </div>
@@ -310,11 +311,11 @@ export function EmailDraftGenerator({ students }: Props) {
 
             <div className="space-y-2">
               <div>
-                <Label className="text-xs text-muted-foreground">Subject:</Label>
+                <Label className="text-xs text-muted-foreground">{t('emailSubject')}</Label>
                 <p className="font-medium">{subject}</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Body:</Label>
+                <Label className="text-xs text-muted-foreground">{t('emailBody')}</Label>
                 <Textarea value={body} readOnly rows={8} className="resize-none bg-background" />
               </div>
             </div>

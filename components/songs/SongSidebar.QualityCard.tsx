@@ -6,7 +6,7 @@ import type { RecordQuality } from '@/lib/data-quality/quality.types';
 
 import { Card, CardHeader } from './SongPrimitives';
 
-const REPORT_PATH = '/dashboard/admin/data-quality';
+const REPORT_PATH = '/dashboard/admin/repertoire-stats?view=quality';
 
 type Props = { quality: RecordQuality; songId: string };
 

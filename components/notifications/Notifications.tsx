@@ -11,6 +11,12 @@ type Props = {
   notifications: InAppNotification[];
   userId: string;
   now: Date;
+  /**
+   * Every unread row the user has — the number the topbar bell shows. The page
+   * only loads the latest NOTIFICATIONS_PAGE_SIZE rows, so counting those would
+   * say "30 unread" next to a bell saying 519.
+   */
+  unreadTotal?: number;
 };
 
 const DAY_MS = 86_400_000;
@@ -58,9 +64,9 @@ const Digest = ({ stats, t }: { stats: [number, string][]; t: (k: string) => str
 );
 
 /** Claude Design activity feed: title + mark-all, daily digest, filter chips, rows. */
-export const Notifications = async ({ notifications, userId, now }: Props) => {
+export const Notifications = async ({ notifications, userId, now, unreadTotal }: Props) => {
   const t = await getTranslations('Notifications');
-  const unread = notifications.filter((n) => !n.is_read).length;
+  const unread = unreadTotal ?? notifications.filter((n) => !n.is_read).length;
   const since = (ms: number) =>
     notifications.filter((n) => now.getTime() - Date.parse(n.created_at) < ms).length;
 

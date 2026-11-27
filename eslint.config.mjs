@@ -27,6 +27,8 @@ const eslintConfig = defineConfig([
     '.claude/**',
     // Active parallel agent worktrees
     'worktrees/**',
+    // Design exports kept for reference (moved out of .claude/ on 2026-11-13) — not app code
+    'design-mockups/**',
   ]),
   // Fix: eslint-plugin-react (bundled by eslint-config-next) uses context.getFilename()
   // which was removed in ESLint 10. Pinning react.version bypasses auto-detection.
@@ -34,6 +36,18 @@ const eslintConfig = defineConfig([
     name: 'project/react-version-fix',
     settings: {
       react: { version: '19.0.0' },
+    },
+  },
+  // React Compiler diagnostics that eslint-plugin-react-hooks 7.1 (eslint-config-next
+  // 16.4) turned on as errors: 13 existing sites, fixed on touch. Warnings, so the bump
+  // is no looser than before it; back to errors once the sites are gone.
+  {
+    name: 'project/react-compiler-rules-ratchet',
+    rules: {
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/refs': 'warn',
     },
   },
   // Allow _-prefixed identifiers to be unused (intentional no-ops)

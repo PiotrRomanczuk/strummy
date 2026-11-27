@@ -1,4 +1,5 @@
 import { AssignmentFilterSchema, AssignmentSortSchema } from '@/schemas/AssignmentSchema';
+import { containsPattern } from '@/lib/supabase/filter-pattern';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { queueNotification } from '@/lib/services/notification-service';
 import { logger } from '@/lib/logger';
@@ -64,7 +65,10 @@ function buildAssignmentQuery(supabase: SupabaseClient, userId: string, profile:
 /**
  * Apply additional filters to query
  */
-function applyFilters(query: ReturnType<typeof buildAssignmentQuery>, filters: Record<string, string | undefined>) {
+function applyFilters(
+  query: ReturnType<typeof buildAssignmentQuery>,
+  filters: Record<string, string | undefined>
+) {
   let result = query;
 
   if (filters.teacher_id) result = result.eq('teacher_id', filters.teacher_id);
@@ -73,7 +77,8 @@ function applyFilters(query: ReturnType<typeof buildAssignmentQuery>, filters: R
   if (filters.song_id) result = result.eq('song_id', filters.song_id);
   if (filters.status) result = result.eq('status', filters.status);
   if (filters.search) {
-    result = result.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+    const pattern = containsPattern(filters.search);
+    result = result.or(`title.ilike.${pattern},description.ilike.${pattern}`);
   }
   if (filters.due_date_from) result = result.gte('due_date', filters.due_date_from);
   if (filters.due_date_to) result = result.lte('due_date', filters.due_date_to);
