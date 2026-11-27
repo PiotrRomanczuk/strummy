@@ -61,7 +61,7 @@ export const SongCardControls = (props: Props) => {
           onRate={youtube.setRate}
           backingRate={backing.rate}
           onBackingRate={backing.setRate}
-          bpm={card.bpm}
+          bpm={card.tempo.bpm}
         />
       }
       isLooping={card.parts.length > 0 ? loopPart !== null : null}

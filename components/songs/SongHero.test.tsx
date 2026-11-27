@@ -11,6 +11,10 @@ import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import { SongHero } from './SongHero';
 import type { Song } from '@/components/songs/types';
 
+jest.mock('@/lib/services/song-timing-queries', () => ({
+  getSongTiming: jest.fn().mockResolvedValue(null),
+}));
+
 const SONG = { id: 'song-abc', title: 'Wonderwall' } as Song;
 
 describe('SongHero — edit link gating', () => {

@@ -8,7 +8,12 @@ import type { SongPart } from '@/schemas/SongSegmentsSchema';
 
 import { SongMapPartDetail } from './SongMapCard.Detail';
 
-type Props = { parts: SongPart[]; beatsPerBar: number };
+type Props = {
+  parts: SongPart[];
+  beatsPerBar: number;
+  /** Shown tempo ÷ counted beat (`SongTempo.scale`), so a part's tempo matches the song's. */
+  tempoScale?: number;
+};
 
 export const KIND_LABEL = {
   intro: 'mapNameIntro',
@@ -38,7 +43,7 @@ const partClass = (isActive: boolean, stripe: string) =>
   }`;
 
 /** The form as a strip (a part's width is its number of bars) and the details of the picked part. */
-export const SongMapParts = ({ parts, beatsPerBar }: Props) => {
+export const SongMapParts = ({ parts, beatsPerBar, tempoScale = 1 }: Props) => {
   const t = useTranslations('Songs');
   const [picked, setPicked] = useState(0);
   const colours = partColours(parts, STRIPE.length);
@@ -66,7 +71,12 @@ export const SongMapParts = ({ parts, beatsPerBar }: Props) => {
           </button>
         ))}
       </div>
-      <SongMapPartDetail part={part} name={nameOf(part)} slots={beatsPerBar * 4} />
+      <SongMapPartDetail
+        part={part}
+        name={nameOf(part)}
+        slots={beatsPerBar * 4}
+        tempoScale={tempoScale}
+      />
     </div>
   );
 };

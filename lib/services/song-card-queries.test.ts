@@ -23,7 +23,7 @@ function clientWith(results: Record<string, Result>) {
           return chain;
         },
         eq: () => chain,
-        maybeSingle: () => Promise.resolve(results[table]),
+        maybeSingle: () => Promise.resolve(results[table] ?? { data: null, error: null }),
       };
       return chain;
     },
@@ -41,6 +41,44 @@ describe('getSongCard', () => {
     expect(card?.parts).toHaveLength(3);
     expect(client.selected.song_analyses).toContain('grid:analysis->grid');
     expect(client.selected.song_analyses).not.toMatch(/(^|,\s*)analysis(,|$)/);
+  });
+
+  it("shows the recording's tempo at the teacher's pulse when the analysis counted double time", async () => {
+    const client = clientWith({
+      songs: { data: { tempo: 58 }, error: null },
+      song_analyses: { data: CARD_ANALYSIS_ROW, error: null },
+      song_segments: { data: CARD_SEGMENTS_ROW, error: null },
+    });
+    (createClient as jest.Mock).mockResolvedValue(client);
+    const card = await getSongCard('song-1');
+    expect(client.selected.songs).toBe('tempo');
+    expect(card?.bpm).toBe(115.38); // the beat grid and backing keep the counted beat
+    expect(card?.tempo).toMatchObject({ countedBpm: 115.38, scale: 0.5, checkAgainst: null });
+    expect(card?.tempo.bpm).toBeCloseTo(57.69);
+  });
+
+  it('uses the felt tempo of a half-time feel heard in the same recording', async () => {
+    (createClient as jest.Mock).mockResolvedValue(
+      clientWith({
+        song_analyses: { data: CARD_ANALYSIS_ROW, error: null },
+        song_segments: {
+          data: { ...CARD_SEGMENTS_ROW, feel: 'half_time', felt_bpm: 57.69 },
+          error: null,
+        },
+      })
+    );
+    expect((await getSongCard('song-1'))?.tempo).toMatchObject({ bpm: 57.69, countedBpm: 115.38 });
+  });
+
+  it('keeps the card when the song tempo cannot be read', async () => {
+    (createClient as jest.Mock).mockResolvedValue(
+      clientWith({
+        songs: { data: null, error: { message: 'boom' } },
+        song_analyses: { data: CARD_ANALYSIS_ROW, error: null },
+        song_segments: { data: null, error: null },
+      })
+    );
+    expect((await getSongCard('song-1'))?.tempo.bpm).toBe(115.38);
   });
 
   it('keeps the card without parts when the segments fetch fails', async () => {

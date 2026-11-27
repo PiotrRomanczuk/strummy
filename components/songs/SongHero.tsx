@@ -7,8 +7,9 @@ import { getTranslations } from 'next-intl/server';
 
 import type { Song } from '@/components/songs/types';
 
-import { msToClock, levelLabel } from './song-format.helpers';
+import { levelLabel } from './song-format.helpers';
 import { SongHeroCardLink } from './SongHero.CardLink';
+import { SongHeroTiming } from './SongHero.Timing';
 import { SongHeroEditLink } from './SongHero.EditLink';
 import { SongHeroDeleteButton } from './SongHero.DeleteButton';
 import { SongOfTheWeekAdmin } from './SongOfTheWeekAdmin';
@@ -52,7 +53,6 @@ export const SongHero = async ({
   canOpenCard = canEdit,
 }: Props) => {
   const t = await getTranslations('Songs');
-  const duration = msToClock(song.duration_ms ?? null);
   const tags: string[] = [];
   if (song.category) tags.push(song.category);
   if (song.strumming_pattern) tags.push(t('strumTag', { pattern: song.strumming_pattern }));
@@ -231,13 +231,7 @@ export const SongHero = async ({
             {song.capo_fret != null && song.capo_fret > 0 && (
               <Meta label={t('metaCapo')} value={t('capoFret', { fret: song.capo_fret })} />
             )}
-            {song.tempo != null && (
-              <Meta label={t('metaTempo')} value={t('tempoBpm', { tempo: song.tempo })} />
-            )}
-            {song.time_signature != null && (
-              <Meta label={t('metaTime')} value={`${song.time_signature}/4`} />
-            )}
-            {duration && <Meta label={t('metaLength')} value={duration} />}
+            <SongHeroTiming song={song} />
             {tags.length > 0 && (
               <>
                 <div
