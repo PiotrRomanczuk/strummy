@@ -76,6 +76,7 @@ describe('student-detail-queries', () => {
           skill_level: 'intermediate',
           avatar_color: '#c08a3e',
           start_date: '2025-09-01',
+          student_status: 'archived',
         },
         error: null,
       });
@@ -94,6 +95,7 @@ describe('student-detail-queries', () => {
         skillLevel: 'intermediate',
         avatarColor: '#c08a3e',
         startDate: '2025-09-01',
+        studentStatus: 'archived',
       });
       expect(mockEq).toHaveBeenCalledWith('id', 's1');
     });
@@ -147,6 +149,7 @@ describe('student-detail-queries', () => {
         skillLevel: null,
         avatarColor: null,
         startDate: null,
+        studentStatus: 'active',
       });
     });
 

@@ -42,6 +42,8 @@ const Toggle = ({
 );
 
 type Props = {
+  /** False for a teacher: only the student status (archive) is shown. */
+  canManageAccount?: boolean;
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
@@ -56,6 +58,7 @@ type Props = {
 
 /** Roles / status / account-active controls for the user edit form. */
 export const UserEditFormAccount = ({
+  canManageAccount = true,
   isAdmin,
   isTeacher,
   isStudent,
@@ -74,14 +77,16 @@ export const UserEditFormAccount = ({
   return (
     <FormSection numeral={t('accountNumeral')} title={t('accountSectionTitle')}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div>
-          <div style={labelStyle}>{t('accountRolesLabel')}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Toggle label={tRoles('admin')} checked={isAdmin} onChange={onIsAdmin} />
-            <Toggle label={tRoles('teacher')} checked={isTeacher} onChange={onIsTeacher} />
-            <Toggle label={tRoles('student')} checked={isStudent} onChange={onIsStudent} />
+        {canManageAccount && (
+          <div>
+            <div style={labelStyle}>{t('accountRolesLabel')}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Toggle label={tRoles('admin')} checked={isAdmin} onChange={onIsAdmin} />
+              <Toggle label={tRoles('teacher')} checked={isTeacher} onChange={onIsTeacher} />
+              <Toggle label={tRoles('student')} checked={isStudent} onChange={onIsStudent} />
+            </div>
           </div>
-        </div>
+        )}
 
         {isStudent && (
           <div>
@@ -97,20 +102,22 @@ export const UserEditFormAccount = ({
           </div>
         )}
 
-        <div>
-          <div style={labelStyle}>{t('accountLabel')}</div>
-          <Toggle
-            label={t('accountActiveToggleLabel')}
-            checked={isActive}
-            onChange={(v) => {
-              if (!v && isActive) {
-                setShowDeactivateDialog(true);
-              } else {
-                onIsActive(v);
-              }
-            }}
-          />
-        </div>
+        {canManageAccount && (
+          <div>
+            <div style={labelStyle}>{t('accountLabel')}</div>
+            <Toggle
+              label={t('accountActiveToggleLabel')}
+              checked={isActive}
+              onChange={(v) => {
+                if (!v && isActive) {
+                  setShowDeactivateDialog(true);
+                } else {
+                  onIsActive(v);
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <AlertDialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>

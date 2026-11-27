@@ -24,9 +24,15 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 6,
 };
 
-export const UserEditForm = ({ user }: { user: EditableUser }) => {
+type Props = {
+  user: EditableUser;
+  /** Admin only: role flags and the account-active toggle. A teacher edits the card and archives. */
+  canManageAccount?: boolean;
+};
+
+export const UserEditForm = ({ user, canManageAccount = true }: Props) => {
   const t = useTranslations('Users');
-  const form = useUserEditForm(user);
+  const form = useUserEditForm(user, canManageAccount);
   const { values, setField, isStudent } = form;
 
   return (
@@ -87,6 +93,7 @@ export const UserEditForm = ({ user }: { user: EditableUser }) => {
         )}
 
         <UserEditFormAccount
+          canManageAccount={canManageAccount}
           isAdmin={form.isAdmin}
           isTeacher={form.isTeacher}
           isStudent={form.isStudent}

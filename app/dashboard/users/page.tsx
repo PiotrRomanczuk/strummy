@@ -54,7 +54,9 @@ export default async function UsersListPage({ searchParams }: { searchParams: Se
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <UsersList rows={rows} filters={filters} canEdit={isAdmin} />
+      {/* A teacher's list holds only students they teach, so they may edit
+          every row (#1178); people, roles and invites stay admin-only. */}
+      <UsersList rows={rows} filters={filters} canEdit={isAdmin || isTeacher} isAdmin={isAdmin} />
     </div>
   );
 }

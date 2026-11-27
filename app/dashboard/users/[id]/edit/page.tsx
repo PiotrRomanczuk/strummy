@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { UserEditForm, type EditableUser } from '@/components/users/UserEditForm';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
+import { canEditStudent } from '@/lib/services/teacher-student-edit';
 import { createClient } from '@/lib/supabase/server';
 
 const geist = Geist({
@@ -32,11 +33,13 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function UserEditPage({ params }: PageProps) {
   const { id } = await params;
-  const { user, isAdmin } = await getUserWithRolesSSR();
+  const { user, profileId, isAdmin, isTeacher } = await getUserWithRolesSSR();
   if (!user) {
     redirect(`/sign-in?redirect=/dashboard/users/${id}/edit`);
   }
-  if (!isAdmin) {
+  // Admins edit anyone; a teacher only a student they teach (#1178). The RPC
+  // behind the save enforces the same rule in the database.
+  if (!(await canEditStudent({ profileId, isAdmin, isTeacher }, id))) {
     redirect(`/dashboard/users/${id}`);
   }
 
@@ -89,7 +92,7 @@ export default async function UserEditPage({ params }: PageProps) {
 
   return (
     <div className={`theme-strummy ${geist.variable} ${geistMono.variable} ${fraunces.variable}`}>
-      <UserEditForm user={editable} />
+      <UserEditForm user={editable} canManageAccount={isAdmin} />
     </div>
   );
 }

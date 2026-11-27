@@ -18,6 +18,8 @@ const controlStyle: React.CSSProperties = {
 
 type Props = {
   filters: UserListFilters;
+  /** Teachers / Admins options are admin-only: a teacher's list holds only their students. */
+  showRoleFilters?: boolean;
 };
 
 const buildHref = (filters: UserListFilters, next: Partial<UserListFilters>): string => {
@@ -32,7 +34,7 @@ const buildHref = (filters: UserListFilters, next: Partial<UserListFilters>): st
 };
 
 /** People filters that apply live — selects push immediately, search debounces. */
-export const UsersListFiltersForm = ({ filters }: Props) => {
+export const UsersListFiltersForm = ({ filters, showRoleFilters = true }: Props) => {
   const t = useTranslations('Users');
   const router = useRouter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,8 +71,12 @@ export const UsersListFiltersForm = ({ filters }: Props) => {
       >
         <option value="">{t('filterAllRolesOption')}</option>
         <option value="student">{t('filterStudentsOption')}</option>
-        <option value="teacher">{t('filterTeachersOption')}</option>
-        <option value="admin">{t('filterAdminsOption')}</option>
+        {showRoleFilters && (
+          <>
+            <option value="teacher">{t('filterTeachersOption')}</option>
+            <option value="admin">{t('filterAdminsOption')}</option>
+          </>
+        )}
         <option value="shadow">{t('filterUnclaimedOption')}</option>
       </select>
       <select

@@ -4,6 +4,7 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { StudentIntakeFieldsSchema, toProfileColumns } from '@/schemas/StudentIntakeSchema';
+import { ADMIN_ONLY_KEYS, updateOwnStudent } from '@/lib/services/teacher-student-edit';
 
 const UpdateUserSchema = z
   .object({
@@ -61,6 +62,21 @@ function buildUserUpdatePayload(body: UpdateUserInput): Record<string, unknown> 
   return payload;
 }
 
+async function teacherUpdate(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  id: string,
+  body: UpdateUserInput
+): Promise<Response> {
+  if (ADMIN_ONLY_KEYS.some((key) => body[key] !== undefined)) {
+    return Response.json({ error: 'Only an admin can change this field' }, { status: 403 });
+  }
+  const result = await updateOwnStudent(supabase, id, body);
+  if (result.error) {
+    return Response.json({ error: result.error }, { status: result.isForbidden ? 403 : 500 });
+  }
+  return Response.json({ id }, { status: 200 });
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { user, isAdmin } = await getUserWithRolesSSR();
@@ -104,9 +120,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { user, isAdmin } = await getUserWithRolesSSR();
+    const { user, isAdmin, isTeacher } = await getUserWithRolesSSR();
 
-    if (!user || !isAdmin) {
+    if (!user || (!isAdmin && !isTeacher)) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -133,6 +149,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const supabase = await createClient();
+
+    // A teacher edits only their own student's card fields, through the RPC
+    // that enforces both in the database (#1178).
+    if (!isAdmin) return teacherUpdate(supabase, id, body);
 
     // Validate parentId if provided
     if (body.parentId !== undefined) {

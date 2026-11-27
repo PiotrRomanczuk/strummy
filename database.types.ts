@@ -6254,6 +6254,10 @@ export type Database = {
         Args: { _student_id: string; _teacher_id: string }
         Returns: boolean
       }
+      teacher_update_student: {
+        Args: { p_changes: Json; p_student_id: string }
+        Returns: undefined
+      }
       transfer_shadow_profile_references: {
         Args: { p_new_id: string; p_old_id: string }
         Returns: Json

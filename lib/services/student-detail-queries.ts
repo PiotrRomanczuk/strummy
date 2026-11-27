@@ -21,6 +21,8 @@ export type StudentProfile = {
   avatarColor: string | null;
   /** `profiles.start_date` — "Since …" in the header; falls back to createdAt. */
   startDate: string | null;
+  /** `profiles.student_status` — drives the archive / restore action (#1178). */
+  studentStatus?: 'active' | 'archived';
 };
 
 export type StudentRepertoireRow = {
@@ -49,7 +51,7 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, full_name, email, created_at, is_shadow, invite_email, phone, instrument, skill_level, avatar_color, start_date'
+      'id, full_name, email, created_at, is_shadow, invite_email, phone, instrument, skill_level, avatar_color, start_date, student_status'
     )
     .eq('id', studentId)
     .single();
@@ -90,6 +92,7 @@ export async function getStudentProfile(studentId: string): Promise<StudentProfi
     skillLevel: (data.skill_level as string | null) ?? null,
     avatarColor: (data.avatar_color as string | null) ?? null,
     startDate: (data.start_date as string | null) ?? null,
+    studentStatus: data.student_status === 'archived' ? 'archived' : 'active',
   };
 }
 

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teacher edits own student — manual test</title>
+<style>
+  :root { --bg:#fbfaf7; --ink:#1d1b18; --muted:#6b665e; --rule:#e4e0d8; --ok:#2f7a4a; --warn:#9a5b12; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161513; --ink:#ece8e1; --muted:#a39d93; --rule:#33302b; --ok:#6cc08a; --warn:#e0a35a; } }
+  body { background:var(--bg); color:var(--ink); font:15px/1.55 system-ui, sans-serif; max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:26px; margin-bottom:4px; } h2 { margin-top:32px; border-bottom:1px solid var(--rule); padding-bottom:4px; }
+  .meta { color:var(--muted); font-size:13px; }
+  code { background:rgba(127,127,127,.15); padding:1px 5px; border-radius:4px; }
+  table { border-collapse:collapse; width:100%; } td, th { border:1px solid var(--rule); padding:6px 8px; text-align:left; vertical-align:top; }
+  .note { border-left:3px solid var(--warn); padding:4px 12px; color:var(--muted); }
+  ol li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<h1>Teacher edits and archives their own student</h1>
+<p class="meta"><strong>Date</strong>: 2026-11-27 · <strong>Issue</strong>: #1178 · <strong>Branch</strong>: <code>feature/teacher-edits-own-student</code></p>
+
+<h2>What changed</h2>
+<ul>
+  <li><strong>Database</strong> — new SECURITY DEFINER function <code>teacher_update_student(p_student_id, p_changes)</code>
+    (migration <code>20261127130000_teacher_update_own_student.sql</code>). An admin, or a teacher who shares a non-deleted
+    lesson with the student, may change the student-card columns (name, phone, level, instrument, start date, colour,
+    parent name/e-mail, schedule, rate, billing cycle, notes) and <code>student_status</code> (archive / restore).
+    Any other key — <code>is_admin</code>, <code>is_teacher</code>, <code>is_active</code>, <code>email</code>,
+    <code>parent_id</code> … — is refused with 42501. Staff profiles and other teachers' students are refused.
+    <code>profiles</code> policies are unchanged, so a direct UPDATE by a teacher still changes nothing.</li>
+  <li><strong>API</strong> — <code>PUT /api/users/[id]</code> now admits teachers; their body goes to the RPC, never to a direct
+    update. Admin-only body keys answer 403.</li>
+  <li><strong>Edit page</strong> — <code>/dashboard/users/[id]/edit</code> lets in a teacher for a student they teach
+    (server-side check, <code>canEditStudent</code>); others are still redirected to the card. The teacher form hides
+    the role toggles and the account-active switch, and keeps the student status (archive).</li>
+  <li><strong>Student card</strong> — "Edit" link and "Archive" (with confirmation) / "Restore" for admin and the student's teacher.</li>
+  <li><strong>List</strong> — a teacher sees the heading "Students / Uczniowie" instead of "People / Osoby", no
+    "Teachers / Admins" role filter options, no "Invite teacher" button, and an "Edit →" link on each of their students.</li>
+</ul>
+
+<h2>How to test (dev stack, after the migration reached <code>StrummyDevelopment</code>)</h2>
+<p class="note">The migration is not applied by hand anywhere; it reaches dev when the PR merges into <code>dev</code>
+(or CI's RLS job applies it to its scratch run). Until then the teacher save answers 500 "function does not exist".</p>
+<ol>
+  <li>Sign in as the dev teacher (<code>TEST_TEACHER_EMAIL</code>, default <code>teacher@dev.local</code>).</li>
+  <li>Open <code>/dashboard/users</code>. Expected: heading "Students", role filter offers only All roles / Students /
+    Unclaimed, no "Invite teacher"; every row has "Edit →".</li>
+  <li>Open one of your students. Expected: "Edit" and "Archive" next to "Import songs" / "Chord map".</li>
+  <li>Click "Edit". Expected: the edit form opens (no redirect), with no Admin/Teacher/Student checkboxes and no
+    "Account active" switch; a Student status select is present.</li>
+  <li>Change the name and level, Save. Expected "✓ Saved"; the card shows the new name and level.</li>
+  <li>Back on the card click "Archive" → confirm. Expected: the button turns into "Restore"; the list's
+    "Archived" status filter shows the student. Click "Restore" → back to active.</li>
+  <li>Open <code>/dashboard/users/&lt;id of a student you do NOT teach&gt;/edit</code>. Expected: redirected to the card; the card has no Edit/Archive.</li>
+  <li>From the browser console (signed in as the teacher):
+    <code>fetch('/api/users/&lt;own student id&gt;',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({isAdmin:true})})</code>
+    → 403. Same with <code>{full_name:'x'}</code> for a student you don't teach → 403.</li>
+  <li>Sign in as admin: the list still says "People", shows all filters, and the edit form still has the role toggles.</li>
+</ol>
+
+<h2>Automated coverage</h2>
+<table>
+  <tr><th>Layer</th><th>File</th><th>What it proves</th></tr>
+  <tr><td>RLS (real DB, CI)</td><td><code>lib/testing/rls/__tests__/teacher-update-student.rls.test.ts</code></td><td>own student edited + archived; other teacher's student, staff profile, role/account/email keys and student caller refused; direct UPDATE still blocked</td></tr>
+  <tr><td>Unit</td><td><code>__tests__/api/users/[id]/route.unit.test.ts</code></td><td>teacher PUT goes through the RPC; admin-only keys → 403; DB 42501 → 403; student → 401</td></tr>
+  <tr><td>Unit</td><td><code>lib/services/teacher-student-edit.unit.test.ts</code></td><td><code>canEditStudent</code> per role; field mapping</td></tr>
+  <tr><td>Component</td><td><code>UsersList.FiltersForm.test.tsx</code>, <code>UserEditForm.Account.test.tsx</code>, <code>ArchiveStudentButton.test.tsx</code></td><td>filters hidden for teacher; no role toggles; archive/restore request and error</td></tr>
+  <tr><td>Core flow</td><td><code>tests/flows/f02-student-invite.spec.ts</code> F02.6</td><td>teacher opens the card, edits name, archives, DB row matches and role flags untouched</td></tr>
+</table>
+
+<h2>Not verified in a browser</h2>
+<p>No screenshots: the migration may not be applied to the shared dev stack by hand, so the teacher save path could not
+run end to end locally. Local gates run: lint, typecheck, unit (511 suites), integration, check:structure.</p>
+
+<h2>Known limits</h2>
+<ul>
+  <li>"My student" means a shared lesson (<code>teacher_students</code>). A student a teacher just added has no lesson yet,
+    so they cannot edit or even see them in the list until the first lesson (#1073, unchanged).</li>
+  <li>E-mail is not editable by a teacher (the edit form never showed it; changing a signed-in account's e-mail needs the auth admin).</li>
+  <li>F02.1–F02.4 (add + invite) still run as admin; only the new F02.6 runs as the teacher.</li>
+</ul>
+</body>
+</html>
