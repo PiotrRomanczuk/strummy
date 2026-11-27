@@ -41,6 +41,16 @@ export const TeacherLeadFormSchema = z.object({
 export type TeacherLeadFormData = z.input<typeof TeacherLeadFormSchema>;
 export type TeacherLeadFormValues = z.output<typeof TeacherLeadFormSchema>;
 
+/**
+ * Admin triage from the lead list: mark a lead replied (`contacted`) or put it
+ * back among the unhandled (`new`).
+ */
+export const TeacherLeadReplySchema = z.object({
+  id: z.string().uuid(),
+  isReplied: z.boolean(),
+});
+export type TeacherLeadReplyInput = z.infer<typeof TeacherLeadReplySchema>;
+
 export type TeacherLeadRow = {
   id: string;
   full_name: string;
