@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { MAIN_TECHNIQUES, isMainTechnique } from '@/lib/music-theory/song-techniques';
 import type { SongsListFilters } from '@/lib/services/songs-list-queries';
 
 import { buildHref, KEYS } from './songs-list.helpers';
@@ -63,6 +64,23 @@ export const SongsListFiltersForm = ({ filters }: Props) => {
         {KEYS.map((k) => (
           <option key={k} value={k}>
             {k}
+          </option>
+        ))}
+      </select>
+      <span className={fieldLabel}>{t('filterTechniqueLabel')}</span>
+      <select
+        name="technique"
+        aria-label={t('filterByTechniqueAria')}
+        defaultValue={filters.technique ?? ''}
+        onChange={(e) =>
+          apply({ technique: isMainTechnique(e.target.value) ? e.target.value : undefined })
+        }
+        className={control}
+      >
+        <option value="">{t('filterAnyTechniqueOption')}</option>
+        {MAIN_TECHNIQUES.map((key) => (
+          <option key={key} value={key}>
+            {t(`techniqueName.${key}`)}
           </option>
         ))}
       </select>
