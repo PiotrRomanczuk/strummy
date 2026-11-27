@@ -4,10 +4,48 @@ import {
   processCalcomBookingPayload,
   type CalcomBookingPayload,
 } from '@/lib/services/calcom';
-import { parseCalcomEmail } from '@/schemas/CalcomWebhookSchema';
+import {
+  cancelCalcomBooking,
+  rescheduleCalcomBooking,
+} from '@/lib/services/calcom-booking-changes';
+import {
+  CalcomCancelPayloadSchema,
+  CalcomReschedulePayloadSchema,
+  parseCalcomEmail,
+} from '@/schemas/CalcomWebhookSchema';
 import { logger } from '@/lib/logger';
 
-const HANDLED_EVENT = 'BOOKING_CREATED';
+const ok = (result: unknown) => NextResponse.json({ success: true, result }, { status: 200 });
+const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 });
+
+/**
+ * One handler per booking event; anything else (meeting events, payments, …)
+ * is acknowledged and ignored so Cal.com does not retry it.
+ */
+async function handleEvent(
+  triggerEvent: string | undefined,
+  rawPayload: Partial<CalcomBookingPayload> | undefined
+): Promise<NextResponse> {
+  if (triggerEvent === 'BOOKING_CANCELLED') {
+    const parsed = CalcomCancelPayloadSchema.safeParse(rawPayload);
+    if (!parsed.success) return badRequest('Invalid booking uid');
+    return ok(await cancelCalcomBooking(parsed.data.uid));
+  }
+
+  if (triggerEvent !== 'BOOKING_CREATED' && triggerEvent !== 'BOOKING_RESCHEDULED') {
+    return NextResponse.json({ ignored: triggerEvent ?? null }, { status: 200 });
+  }
+
+  const payload = { ...rawPayload, triggerEvent } as CalcomBookingPayload;
+  if (!parseCalcomEmail(payload.attendees?.[0]?.email)) {
+    return badRequest('Invalid attendee email');
+  }
+  if (triggerEvent === 'BOOKING_CREATED') return ok(await processCalcomBookingPayload(payload));
+
+  const change = CalcomReschedulePayloadSchema.safeParse(rawPayload);
+  if (!change.success) return badRequest('Invalid reschedule payload');
+  return ok(await rescheduleCalcomBooking(change.data, payload));
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,20 +72,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    // Only a new booking creates a lesson; cancellations, reschedules and
-    // meeting events must not be replayed as bookings.
-    if (envelope.triggerEvent !== HANDLED_EVENT) {
-      return NextResponse.json({ ignored: envelope.triggerEvent ?? null }, { status: 200 });
-    }
-
-    const payload = { ...envelope.payload, triggerEvent: HANDLED_EVENT } as CalcomBookingPayload;
-    if (!parseCalcomEmail(payload.attendees?.[0]?.email)) {
-      return NextResponse.json({ error: 'Invalid attendee email' }, { status: 400 });
-    }
-
-    const result = await processCalcomBookingPayload(payload);
-
-    return NextResponse.json({ success: true, result }, { status: 200 });
+    return await handleEvent(envelope.triggerEvent, envelope.payload);
   } catch (err: unknown) {
     // Details go to the log only; the caller gets a fixed message.
     logger.error('[Cal.com Webhook Error]:', err);

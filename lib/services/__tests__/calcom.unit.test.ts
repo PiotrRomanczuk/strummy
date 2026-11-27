@@ -10,6 +10,8 @@ jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(),
 }));
 
+const TEACHER_ID = '11111111-1111-4111-8111-111111111111';
+
 describe('Cal.com Integration Service', () => {
   const mockSupabase = {
     from: jest.fn(),
@@ -17,7 +19,53 @@ describe('Cal.com Integration Service', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.CALCOM_TEACHER_PROFILE_ID = TEACHER_ID;
     (createAdminClient as jest.Mock).mockReturnValue(mockSupabase);
+  });
+
+  afterAll(() => {
+    delete process.env.CALCOM_TEACHER_PROFILE_ID;
+  });
+
+  describe('teacher from configuration', () => {
+    const payload: CalcomBookingPayload = {
+      triggerEvent: 'BOOKING_CREATED',
+      uid: 'cal_booking_1',
+      startTime: '2026-08-10T10:00:00.000Z',
+      attendees: [{ name: 'Test Booker', email: 'booker@example.com' }],
+    };
+
+    it.each([undefined, '', 'not-a-uuid'])(
+      'refuses to guess a teacher when CALCOM_TEACHER_PROFILE_ID is %p',
+      async (value) => {
+        if (value === undefined) delete process.env.CALCOM_TEACHER_PROFILE_ID;
+        else process.env.CALCOM_TEACHER_PROFILE_ID = value;
+
+        await expect(processCalcomBookingPayload(payload)).rejects.toThrow(
+          'CALCOM_TEACHER_PROFILE_ID is not set'
+        );
+        expect(mockSupabase.from).not.toHaveBeenCalled();
+      }
+    );
+
+    it('refuses a configured profile that is not a teacher or admin', async () => {
+      const roles = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      mockSupabase.from.mockImplementation((table: string) =>
+        table === 'user_roles' ? roles : {}
+      );
+
+      await expect(processCalcomBookingPayload(payload)).rejects.toThrow(
+        'is not a teacher or admin'
+      );
+      expect(roles.eq).toHaveBeenCalledWith('profile_id', TEACHER_ID);
+      expect(mockSupabase.from).not.toHaveBeenCalledWith('lessons');
+    });
   });
 
   describe('verifyCalcomSignature', () => {
@@ -107,9 +155,10 @@ describe('Cal.com Integration Service', () => {
       // Mock teacher query
       const mockTeacherChain = {
         select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
         in: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        maybeSingle: jest.fn().mockResolvedValue({ data: { user_id: 'teacher_uuid_1' } }),
+        maybeSingle: jest.fn().mockResolvedValue({ data: { profile_id: TEACHER_ID } }),
       };
 
       // Mock profiles lookup (existing profile null)
@@ -159,7 +208,7 @@ describe('Cal.com Integration Service', () => {
 
       expect(mockLessonsChain.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          teacher_id: 'teacher_uuid_1',
+          teacher_id: TEACHER_ID,
           student_id: 'student_uuid_1',
           scheduled_at: '2026-08-10T10:00:00.000Z',
           duration_minutes: 45,
