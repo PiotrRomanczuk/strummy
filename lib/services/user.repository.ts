@@ -8,12 +8,13 @@
  * - Performance-optimized batch queries
  *
  * Fixes:
- * - STRUMMY-282: Query injection via sanitizeSearchQuery()
+ * - STRUMMY-282: Query injection via cleanSearchTerm() (lib/supabase/filter-pattern)
  * - STRUMMY-285: Auth scan via is_registered flag (future migration)
  * - STRUMMY-263: N+1 queries via getUsersWithStats()
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { cleanSearchTerm } from '@/lib/supabase/filter-pattern';
 
 // ============================================================================
 // TYPES
@@ -72,25 +73,6 @@ export type CreateUserInput = {
 export type UpdateUserInput = Partial<Omit<CreateUserInput, 'id' | 'email'>>;
 
 // ============================================================================
-// QUERY SANITIZATION
-// ============================================================================
-
-/**
- * Sanitize search query to prevent PostgREST filter injection
- * Removes special characters: % _ * ( ) . , = < > and limits length
- *
- * Fixes STRUMMY-282: Query injection vulnerability
- */
-export function sanitizeSearchQuery(input: string): string {
-  if (!input) return '';
-
-  return input
-    .replace(/[%_*().,=<>]/g, '') // Remove PostgREST special chars
-    .trim()
-    .substring(0, 100); // Limit to 100 chars max
-}
-
-// ============================================================================
 // QUERY BUILDERS
 // ============================================================================
 
@@ -143,7 +125,7 @@ export function applyUserFilters(query: any, filters: UserFilters) {
 
   // Search filter (sanitized to prevent injection)
   if (filters.search) {
-    const sanitized = sanitizeSearchQuery(filters.search);
+    const sanitized = cleanSearchTerm(filters.search);
     if (sanitized) {
       result = result.or(`email.ilike.%${sanitized}%,full_name.ilike.%${sanitized}%`);
     }

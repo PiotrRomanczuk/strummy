@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search input in or() filters</title>
+<style>
+  body { font: 16px/1.55 system-ui, sans-serif; max-width: 46rem; margin: 2rem auto; padding: 0 1rem; color: #1c1c1c; background: #fff; }
+  h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+  code { background: #f2f2f2; padding: 0 .25rem; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #ddd; padding: .4rem; text-align: left; vertical-align: top; }
+  @media (prefers-color-scheme: dark) { body { background: #161616; color: #e8e8e8; } code { background: #2a2a2a; } td, th { border-color: #444; } }
+</style>
+</head>
+<body>
+<h1>Search input in PostgREST or() filters (#1098)</h1>
+<p><strong>Date</strong>: 2026-11-27 · <strong>Scope</strong>: backend only, no UI change, no migration</p>
+
+<h2>What changed</h2>
+<ul>
+  <li>One helper, <code>cleanSearchTerm()</code> in <code>lib/supabase/filter-pattern.ts</code>, now cleans every search term that goes into an <code>.or()</code> filter: it removes <code>, ( ) " \</code> and the LIKE wildcards <code>% _ *</code>, trims and caps at 100 characters. <code>containsPattern()</code> builds on it.</li>
+  <li>Three local sanitizers were replaced by it: song search API (<code>sanitizePostgrestFilter</code>), user repository (<code>sanitizeSearchQuery</code>) and the Song-of-the-week song search.</li>
+  <li>Cal.com e-mail lookups already used two <code>.eq()</code> queries (on <code>dev</code>); they now have a unit test proving an address with <code>,</code> and <code>)</code> matches no other profile and marks no one else as a parent.</li>
+  <li>Dots are no longer stripped: inside an <code>ilike</code> value they are text, so searching <code>Mr. Brightside</code> or an e-mail works.</li>
+</ul>
+
+<h2>How to test manually (dev stack, <code>npm run dev</code>)</h2>
+<table>
+  <tr><th>Where</th><th>Input</th><th>Expected</th></tr>
+  <tr><td>Songs search (<code>/api/song/search?q=…</code>)</td><td><code>Mr. Brightside</code></td><td>Finds the song (dot kept).</td></tr>
+  <tr><td>Songs search</td><td><code>rock,title.eq.x</code></td><td>200, no extra condition; only songs containing <code>rocktitle.eq.x</code> (usually none).</td></tr>
+  <tr><td>Songs search</td><td><code>%,()</code></td><td>200, no text filter applied (term empty).</td></tr>
+  <tr><td>Dashboard → users search (teacher)</td><td>a student's e-mail</td><td>The student is found (dots kept, previously stripped).</td></tr>
+  <tr><td>Song of the week → pick song</td><td><code>100%</code></td><td>Searches for <code>100</code>, no wildcard-everything.</td></tr>
+</table>
+
+<h2>Automated</h2>
+<ul>
+  <li><code>npx jest lib/supabase/filter-pattern lib/services/calcom-family app/api/song/search lib/services/__tests__/user.repository</code> — 55 tests pass.</li>
+  <li>Full gates: lint (0 errors), typecheck, <code>npm test</code> (508 suites), <code>check:structure</code> clean.</li>
+</ul>
+</body>
+</html>
