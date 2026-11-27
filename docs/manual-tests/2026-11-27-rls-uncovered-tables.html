@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>RLS tests for the uncovered tables - manual test report</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        max-width: 980px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1c1917;
+      }
+      h2 {
+        margin-top: 2rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+      }
+      code {
+        background: #f3efe6;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: #f3efe6;
+        padding: 0.7rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 4px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>RLS tests for the uncovered tables (#1216)</h1>
+    <p>
+      <b>Date</b>: 2026-11-27 &middot; <b>Branch</b>:
+      <code>chore/rls-uncovered-tables</code> &middot; <b>Checked on</b>: Mac on the home LAN
+      against <code>StrummyDevelopment</code>. Tests only, no product code, no migration. No
+      browser.
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr>
+        <th>File (<code>lib/testing/rls/__tests__/</code>)</th>
+        <th>Tables</th>
+      </tr>
+      <tr>
+        <td><code>quiz-skills.rls.test.ts</code></td>
+        <td>
+          <code>chord_quiz_attempts</code>, <code>chord_srs</code>, <code>student_skills</code>,
+          <code>skills</code>
+        </td>
+      </tr>
+      <tr>
+        <td><code>theory.rls.test.ts</code></td>
+        <td>
+          <code>theoretical_courses</code>, <code>theoretical_lessons</code>,
+          <code>theoretical_course_access</code>
+        </td>
+      </tr>
+      <tr>
+        <td><code>ai.rls.test.ts</code></td>
+        <td>
+          <code>ai_conversations</code>, <code>ai_messages</code>, <code>ai_generations</code>
+        </td>
+      </tr>
+      <tr>
+        <td><code>song-extras.rls.test.ts</code></td>
+        <td>
+          <code>song_requests</code>, <code>song_status_history</code>,
+          <code>song_of_the_week</code>, <code>song_sections</code>, <code>spotify_matches</code>
+        </td>
+      </tr>
+      <tr>
+        <td><code>other-tables.rls.test.ts</code></td>
+        <td>
+          <code>api_keys</code>, <code>task_management</code>, <code>system_logs</code>,
+          <code>lesson_songs</code>
+        </td>
+      </tr>
+    </table>
+    <p>
+      Each owned table: the owner reads and writes their row, a second user of the same role neither
+      sees nor changes it nor writes in the owner's name, a lower role cannot write. Shared tables
+      without an owner (<code>skills</code>, <code>song_of_the_week</code>,
+      <code>song_sections</code>, <code>spotify_matches</code>, <code>system_logs</code>) pin who
+      may read and who may write. Every suite deletes its own rows in <code>afterAll</code>.
+    </p>
+
+    <h2>What the real database showed</h2>
+    <ul>
+      <li>
+        Two write paths of the theory tables are wider than intended. They are pinned with
+        <code>it.failing</code>; details are with the owner.
+      </li>
+      <li>
+        <code>song_sections</code> is narrower than intended: the write policies still identify
+        staff the pre-split way, so a teacher created today cannot add a section. Pinned with
+        <code>it.failing</code>.
+      </li>
+      <li>Everything else behaves as the policies say.</li>
+    </ul>
+
+    <h2>How to test</h2>
+    <pre>
+RLS_TEST_SUPABASE_URL=&lt;dev stack&gt; RLS_TEST_SERVICE_ROLE_KEY=… RLS_TEST_ANON_KEY=… \
+  npx jest --config jest.config.rls.ts quiz-skills theory.rls ai.rls song-extras other-tables</pre>
+    <p>
+      Expected: 5 suites, 42 tests passed (3 of them <code>it.failing</code>), and global teardown
+      ends without a "left rows behind" error. When a policy above is fixed, its
+      <code>it.failing</code> test turns red: remove the marker in the same PR.
+    </p>
+    <p>
+      Full <code>npm run test:rls</code> on the Mac: 47 of 48 suites pass;
+      <code>calendar-sync-recurring.rls.test.ts</code> needs env this local run did not set
+      ("supabaseUrl is required"), unrelated to this change. Rows a concurrent Playwright run had
+      left on the shared stack showed up in the leak list; none were this suite's.
+    </p>
+  </body>
+</html>
