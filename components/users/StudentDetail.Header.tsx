@@ -38,6 +38,7 @@ type Props = {
   preferences: StudentPreferences | null;
   health: StudentHealth;
   stats: StudentHeaderStats;
+  canEditProfile?: boolean;
 };
 
 const MetaItem = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
@@ -48,7 +49,13 @@ const MetaItem = ({ icon, children }: { icon: React.ReactNode; children: React.R
 );
 
 /** Claude Design student header: breadcrumb, identity, actions, attention banner, stat tiles. */
-export const StudentDetailHeader = async ({ profile, preferences, health, stats }: Props) => {
+export const StudentDetailHeader = async ({
+  profile,
+  preferences,
+  health,
+  stats,
+  canEditProfile = false,
+}: Props) => {
   const [t, locale] = await Promise.all([getTranslations('Users'), getLocale()]);
   const name = profile.fullName ?? profile.email ?? t('detailStudentFallback');
   const isAtRisk = SHOW_PRACTICE_FEATURES && health.status === 'at_risk';
@@ -189,7 +196,7 @@ export const StudentDetailHeader = async ({ profile, preferences, health, stats 
           </div>
           <StudentAboutLine preferences={preferences} />
         </div>
-        <HeaderActions profile={profile} isAtRisk={isAtRisk} />
+        <HeaderActions profile={profile} isAtRisk={isAtRisk} canEditProfile={canEditProfile} />
       </div>
 
       {isAtRisk && <StudentAttentionBanner profile={profile} health={health} />}

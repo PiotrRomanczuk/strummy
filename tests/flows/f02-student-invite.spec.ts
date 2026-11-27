@@ -2,7 +2,7 @@ import type { BrowserContext } from '@playwright/test';
 
 import { test, expect } from '../fixtures';
 import { extractVerifyLink, fetchMessageBody, waitForEmail } from '../helpers/mailpit';
-import { adminClient } from '../helpers/seed-ids';
+import { adminClient, getTeacherId } from '../helpers/seed-ids';
 
 /**
  * F02 — Teacher adds a student → invite → student signs up → linked.
@@ -39,9 +39,11 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
   let createdAt = 0;
   let inviteLink: string | null = null;
   let studentStorage: Awaited<ReturnType<BrowserContext['storageState']>> | null = null;
+  let teacherLessonId: string | null = null;
 
   test.afterAll(async () => {
     const db = adminClient();
+    if (teacherLessonId) await db.from('lessons').delete().eq('id', teacherLessonId);
     // The invite creates the auth user (and claims the shadow) before F02.3
     // finishes, so resolve the auth id from the row rather than trusting the
     // test body reached the point where it recorded it.
@@ -241,5 +243,54 @@ test.describe('F02 student invite', { tag: ['@flow'] }, () => {
     await page.getByRole('button', { name: 'Save changes' }).click();
     // Fails on main: SKILL_LEVELS lacks 'novice' → "Invalid request body".
     await expect(page.getByText('✓ Saved')).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('F02.6 the teacher edits and archives their own student (#1178)', async ({
+    page,
+    loginAs,
+  }) => {
+    test.skip(!profileId, 'F02.1 did not create a profile');
+    test.setTimeout(60_000);
+    // A teacher "teaches" a student once they share a lesson (teacher_students).
+    const db = adminClient();
+    const { data: lesson, error } = await db
+      .from('lessons')
+      .insert({
+        teacher_id: await getTeacherId(db),
+        student_id: profileId!,
+        title: `Flow Lesson ${RUN}`,
+        scheduled_at: '2030-05-06T10:00:00Z',
+      })
+      .select('id')
+      .single();
+    expect(error).toBeNull();
+    teacherLessonId = lesson?.id ?? null;
+
+    await loginAs('teacher');
+    await page.goto(`/dashboard/users/${profileId}`);
+    await page.getByRole('link', { name: 'Edit', exact: true }).click();
+    await page.waitForURL(new RegExp(`/dashboard/users/${profileId}/edit$`), { timeout: 30_000 });
+
+    // No role toggles for a teacher, only the card and the student status.
+    await expect(page.getByRole('checkbox')).toHaveCount(0);
+    await page.getByPlaceholder('e.g. Emma Johnson').fill(`${NAME} edited`);
+    await page
+      .locator('select')
+      .filter({ has: page.locator('option[value="archived"]') })
+      .selectOption('archived');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(page.getByText('✓ Saved')).toBeVisible({ timeout: 15_000 });
+
+    const { data } = await db
+      .from('profiles')
+      .select('full_name, student_status, is_admin, is_teacher')
+      .eq('id', profileId!)
+      .single();
+    expect(data).toEqual({
+      full_name: `${NAME} edited`,
+      student_status: 'archived',
+      is_admin: false,
+      is_teacher: false,
+    });
   });
 });

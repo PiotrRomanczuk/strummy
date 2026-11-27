@@ -44,7 +44,7 @@ while no CI E2E job is using the shared dev stack — its seed and teardown race
 | #   | Flow                                                                                          | Steps | Spec                         |
 | --- | --------------------------------------------------------------------------------------------- | ----- | ---------------------------- |
 | F01 | Sign in, wrong password, reset mail, reset link to new password, sign out, teacher onboarding | 6     | `f01-account.spec.ts`        |
-| F02 | Add student with e-mail → invited at once → claims → journey → roles                          | 5     | `f02-student-invite.spec.ts` |
+| F02 | Add student with e-mail → invited at once → claims → journey → roles → teacher edits/archives | 6     | `f02-student-invite.spec.ts` |
 | F03 | Schedule a lesson (incl. weekly) → student sees it → 24h reminder mail                        | 4     | `f03-lesson.spec.ts`         |
 | F04 | Lesson content: songs, stage, notes → student sees them → recap mail                          | 5     | `f04-lesson-content.spec.ts` |
 | F05 | Assignment: create → complete → teacher notified → overdue reminder mail                      | 6     | `f05-assignment.spec.ts`     |

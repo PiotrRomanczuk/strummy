@@ -43,9 +43,11 @@ type Props = {
   rows: UserListRow[];
   filters: UserListFilters;
   canEdit: boolean;
+  /** Admin sees "People", role filters and the teacher invite; a teacher sees "Students". */
+  isAdmin?: boolean;
 };
 
-export const UsersList = async ({ rows, filters, canEdit }: Props) => {
+export const UsersList = async ({ rows, filters, canEdit, isAdmin = false }: Props) => {
   const [t, tRoles, locale] = await Promise.all([
     getTranslations('Users'),
     getTranslations('Roles'),
@@ -86,14 +88,14 @@ export const UsersList = async ({ rows, filters, canEdit }: Props) => {
               fontStyle: 'italic',
             }}
           >
-            {t('listTitle')}
+            {isAdmin ? t('listTitle') : t('listTitleStudents')}
           </h1>
           <div style={{ color: 'var(--ink-3)', fontSize: 13 }}>
             {t('listCountShown', { count: rows.length })}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {canEdit && <InviteTeacherButton />}
+          {isAdmin && <InviteTeacherButton />}
           <Link
             href="/dashboard/users/new"
             className="ui-chip"
@@ -115,7 +117,7 @@ export const UsersList = async ({ rows, filters, canEdit }: Props) => {
         </div>
       </div>
 
-      <UsersListFiltersForm filters={filters} />
+      <UsersListFiltersForm filters={filters} showRoleFilters={isAdmin} />
 
       <div
         style={{

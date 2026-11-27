@@ -30,6 +30,8 @@ type Props = {
   nextLesson: NextLesson;
   /** True when the viewer is staff (admin/teacher) and may edit repertoire status. */
   canEdit?: boolean;
+  /** Admin, or a teacher who teaches this student: Edit + Archive on the card (#1178). */
+  canEditProfile?: boolean;
   /** All-time completed lessons — the fourth stat tile. */
   lessonsCompleted?: number;
   studentSkills?: StudentSkill[];
@@ -50,6 +52,7 @@ export const StudentDetail = ({
   practiceSessions,
   nextLesson,
   canEdit = false,
+  canEditProfile = false,
   lessonsCompleted = 0,
   studentSkills = [],
   availableSkills = [],
@@ -81,6 +84,7 @@ export const StudentDetail = ({
         profile={profile}
         preferences={preferences}
         health={health}
+        canEditProfile={canEditProfile}
         stats={{
           streak: practiceStreak(practiceHistory, now),
           daysSincePractice: health.daysSincePractice,

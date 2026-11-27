@@ -888,6 +888,13 @@
   "Users": {
     "listEyebrow": "Studio",
     "listTitle": "People",
+    "listTitleStudents": "Students",
+    "detailEditLink": "Edit",
+    "archiveStudentButton": "Archive",
+    "restoreStudentButton": "Restore",
+    "archiveStudentDialogTitle": "Archive this student?",
+    "archiveStudentDialogDescription": "They leave your active list. Lessons, songs and history stay, and you can restore them at any time.",
+    "archiveStudentError": "Could not save. Try again.",
     "listCountShown": "{count} shown",
     "listNewStudentButton": "+ New student",
     "listEmptyState": "No people match these filters.",

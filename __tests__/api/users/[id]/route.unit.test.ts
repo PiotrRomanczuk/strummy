@@ -214,3 +214,64 @@ describe('GET /api/users/[id] - teacher notes (#1096)', () => {
     await expect(res.json()).resolves.toMatchObject({ notes: null });
   });
 });
+
+describe('PUT /api/users/[id] - teacher edits own student (#1178)', () => {
+  const rpc = jest.fn();
+  const from = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    rpc.mockResolvedValue({ data: null, error: null });
+    (createClient as jest.Mock).mockResolvedValue({ rpc, from });
+    (getUserWithRolesSSR as jest.Mock).mockResolvedValue({
+      user: { id: 'teacher-auth-id' },
+      profileId: 'teacher-profile-id',
+      isAdmin: false,
+      isTeacher: true,
+    });
+  });
+
+  it('saves the card fields and archive through the RPC, never a direct update', async () => {
+    const res = await PUT(
+      makeRequest({ full_name: 'Fixed Name', skillLevel: 'advanced', studentStatus: 'archived' }),
+      { params: paramsPromise }
+    );
+
+    expect(res.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith('teacher_update_student', {
+      p_student_id: targetUserId,
+      p_changes: { full_name: 'Fixed Name', skill_level: 'advanced', student_status: 'archived' },
+    });
+  });
+
+  it.each([{ isAdmin: true }, { isTeacher: false }, { isActive: false }, { parentId: null }])(
+    'refuses an admin-only field %p with 403',
+    async (field) => {
+      const res = await PUT(makeRequest({ full_name: 'X', ...field }), { params: paramsPromise });
+      expect(res.status).toBe(403);
+      expect(rpc).not.toHaveBeenCalled();
+    }
+  );
+
+  it('answers 403 when the database says the student is not theirs', async () => {
+    rpc.mockResolvedValue({
+      data: null,
+      error: { code: '42501', message: 'teacher_update_student: not your student' },
+    });
+    const res = await PUT(makeRequest({ full_name: 'X' }), { params: paramsPromise });
+    expect(res.status).toBe(403);
+  });
+
+  it('keeps a student (no teacher role) out entirely', async () => {
+    (getUserWithRolesSSR as jest.Mock).mockResolvedValue({
+      user: { id: 'student-auth-id' },
+      profileId: 'student-profile-id',
+      isAdmin: false,
+      isTeacher: false,
+    });
+    const res = await PUT(makeRequest({ full_name: 'X' }), { params: paramsPromise });
+    expect(res.status).toBe(401);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+});

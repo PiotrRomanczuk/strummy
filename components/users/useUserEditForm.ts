@@ -33,7 +33,7 @@ const toValues = (user: EditableUser): StudentFormValues => ({
 });
 
 /** State + save logic for the user/student edit form. */
-export function useUserEditForm(user: EditableUser) {
+export function useUserEditForm(user: EditableUser, canManageAccount = true) {
   const router = useRouter();
   const [values, setValues] = useState<StudentFormValues>(() => toValues(user));
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
@@ -60,13 +60,12 @@ export function useUserEditForm(user: EditableUser) {
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        // A teacher may not send role flags or the account toggle: the API
+        // refuses them (403), and so does the database RPC (#1178).
         body: JSON.stringify({
           full_name: values.fullName,
           phone: values.phone,
-          isAdmin,
-          isTeacher,
-          isStudent,
-          isActive,
+          ...(canManageAccount ? { isAdmin, isTeacher, isStudent, isActive } : {}),
           studentStatus,
           ...(isStudent ? studentIntakePayload(values) : {}),
         }),
@@ -82,7 +81,17 @@ export function useUserEditForm(user: EditableUser) {
     } finally {
       setIsSaving(false);
     }
-  }, [user.id, values, isAdmin, isTeacher, isStudent, isActive, studentStatus, router]);
+  }, [
+    user.id,
+    values,
+    canManageAccount,
+    isAdmin,
+    isTeacher,
+    isStudent,
+    isActive,
+    studentStatus,
+    router,
+  ]);
 
   return {
     values,

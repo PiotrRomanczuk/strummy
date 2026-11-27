@@ -888,6 +888,13 @@
   "Users": {
     "listEyebrow": "Studio",
     "listTitle": "Osoby",
+    "listTitleStudents": "Uczniowie",
+    "detailEditLink": "Edytuj",
+    "archiveStudentButton": "Archiwizuj",
+    "restoreStudentButton": "Przywróć",
+    "archiveStudentDialogTitle": "Zarchiwizować tego ucznia?",
+    "archiveStudentDialogDescription": "Zniknie z listy aktywnych uczniów. Lekcje, utwory i historia zostają, a ucznia możesz w każdej chwili przywrócić.",
+    "archiveStudentError": "Nie udało się zapisać. Spróbuj ponownie.",
     "listCountShown": "Widoczne: {count}",
     "listNewStudentButton": "+ Nowy uczeń",
     "listEmptyState": "Brak osób pasujących do tych filtrów.",

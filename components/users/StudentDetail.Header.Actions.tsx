@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import type { StudentProfile } from '@/lib/services/student-detail-queries';
 
 import { DeleteShadowButton } from './DeleteShadowButton';
+import { HeaderManage } from './StudentDetail.Header.Manage';
 import { InlineInviteButton } from './InlineInviteButton';
 import { InviteShadowButton } from './InviteShadowButton';
 
@@ -38,9 +39,12 @@ const outline: React.CSSProperties = {
 export const HeaderActions = async ({
   profile,
   isAtRisk,
+  canEditProfile = false,
 }: {
   profile: StudentProfile;
   isAtRisk: boolean;
+  /** Admin, or a teacher who teaches this student (#1178). */
+  canEditProfile?: boolean;
 }) => {
   const t = await getTranslations('Users');
   return (
@@ -102,6 +106,7 @@ export const HeaderActions = async ({
         >
           <Grid3x3 size={13} aria-hidden="true" /> {t('detailChordMapLink')}
         </Link>
+        {canEditProfile && <HeaderManage profile={profile} />}
         {profile.isShadow && <DeleteShadowButton userId={profile.id} />}
       </div>
     </div>
