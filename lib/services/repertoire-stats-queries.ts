@@ -101,7 +101,7 @@ export async function getRepertoireSongDetail(songId: string): Promise<SongDetai
     supabase
       .from('song_analyses')
       .select(
-        'sections:analysis->sections, bar_chords:analysis->chords, vocabulary:analysis->harmony->vocabulary'
+        'key, sections:analysis->sections, bar_chords:analysis->chords, vocabulary:analysis->harmony->vocabulary'
       )
       .eq('song_id', songId)
       .maybeSingle(),
@@ -113,7 +113,12 @@ export async function getRepertoireSongDetail(songId: string): Promise<SongDetai
   return {
     sheet: song.data?.lyrics_with_chords ?? null,
     sections: analysis.data
-      ? sectionsOf(analysis.data.sections, analysis.data.bar_chords, analysis.data.vocabulary)
+      ? sectionsOf(
+          analysis.data.sections,
+          analysis.data.bar_chords,
+          analysis.data.vocabulary,
+          analysis.data.key?.endsWith('m') ?? false
+        )
       : [],
   };
 }

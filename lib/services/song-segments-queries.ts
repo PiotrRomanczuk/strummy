@@ -1,5 +1,8 @@
+import { cache } from 'react';
+
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { splitKey, withTonicNumerals } from '@/lib/music-theory/song-map';
 import { SongSegmentsReadSchema, type SongPart } from '@/schemas/SongSegmentsSchema';
 
 export interface SongMapView {
@@ -28,9 +31,10 @@ async function fetchSegments(songId: string): Promise<unknown> {
 /**
  * The song part by part from song2logic's analysis of its recording (`song_segments`, SNG-16). Staff only — RLS
  * returns nothing to a student. Null when the song has no segments, the stored ones no longer fit the schema, or
- * the fetch fails: the card is an extra and must never take the song page down.
+ * the fetch fails: the card is an extra and must never take the song page down. Cached per request: the
+ * sections card asks too, to stay out of the map's way.
  */
-export async function getSongMap(songId: string): Promise<SongMapView | null> {
+export const getSongMap = cache(async (songId: string): Promise<SongMapView | null> => {
   let row: unknown;
   try {
     row = await fetchSegments(songId);
@@ -53,6 +57,6 @@ export async function getSongMap(songId: string): Promise<SongMapView | null> {
     bpm,
     feltBpm: feel === 'half_time' ? felt_bpm : null,
     beatsPerBar: beats_per_bar,
-    parts,
+    parts: withTonicNumerals(parts, splitKey(song_key).isMinor),
   };
-}
+});

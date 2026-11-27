@@ -1,7 +1,7 @@
 import type { BassNote, Groove, SongPart } from '@/schemas/SongSegmentsSchema';
 import type { CardCapo, CardChord, CardGrid } from '@/schemas/SongCardSchema';
 
-import { partKind, splitKey, type PartKind } from './song-map';
+import { partKind, splitKey, withTonicNumerals, type PartKind } from './song-map';
 
 /**
  * The song card (SNG-17): one recording's analysis as bars in seconds, the parts over them and the guitar's
@@ -124,13 +124,17 @@ export function cardParts(parts: SongPart[], bassBars: (BassNote[][] | null)[]):
 export function buildSongCard(input: SongCardInput): SongCard {
   const duration = input.duration ?? input.grid.beats_s.at(-1) ?? 0;
   const guitar = input.rhythm.find((track) => track.track === GUITAR_TRACK);
+  const key = input.key ? splitKey(`${input.key.tonic} ${input.key.scale}`) : null;
+  const parts = input.segments
+    ? withTonicNumerals(input.segments.parts, key?.isMinor ?? false)
+    : null;
   return {
     duration,
     bpm: input.grid.bpm,
     beatsPerBar: input.grid.beats_per_bar,
-    key: input.key ? splitKey(`${input.key.tonic} ${input.key.scale}`) : null,
+    key,
     bars: cardBars(input.grid, input.chords, duration),
-    parts: input.segments ? cardParts(input.segments.parts, input.segments.bassBars) : [],
+    parts: parts && input.segments ? cardParts(parts, input.segments.bassBars) : [],
     strum: guitar?.pattern.length === SLOTS ? guitar.pattern : null,
     capo: input.capo && input.capo.fret > 0 ? input.capo : null,
     youtubeId: youtubeId(input.sourceUrl),
