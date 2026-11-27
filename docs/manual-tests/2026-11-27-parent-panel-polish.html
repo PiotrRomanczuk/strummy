@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Parent panel polish — manual test (2026-11-27)</title>
+<style>
+  body { font: 15px/1.55 system-ui, sans-serif; max-width: 860px; margin: 32px auto; padding: 0 16px; color: #222; background: #fff; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  h2 { font-size: 18px; margin-top: 28px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  code, pre { font: 13px/1.45 ui-monospace, monospace; background: #f4f4f4; border-radius: 4px; }
+  code { padding: 1px 4px; }
+  pre { padding: 10px 12px; overflow-x: auto; }
+  .meta { color: #666; font-size: 13px; }
+  td, th { border: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; }
+  table { border-collapse: collapse; width: 100%; }
+  @media (prefers-color-scheme: dark) { body { background: #151515; color: #ddd; } code, pre { background: #222; } td, th { border-color: #333; } }
+</style>
+</head>
+<body>
+<h1>Parent panel polish (#1092)</h1>
+<p class="meta"><strong>Date</strong>: 2026-11-27 · <strong>Branch</strong>: <code>fix/parent-panel-polish-teacher-name</code> · <strong>Scope</strong>: family dashboard (<code>/dashboard</code> as a parent)</p>
+
+<h2>What was done</h2>
+<ul>
+  <li><strong>Teacher's name, without the service role.</strong> The parent dashboard used to fill in the teacher's name with the admin (service-role) client, because RLS gives a parent the child's lessons but not the teacher's profile. It now calls a new SECURITY DEFINER function <code>public.child_teacher_names(p_child_id)</code> as the signed-in parent. It returns only <code>id</code> and <code>full_name</code>, only for teachers of non-deleted lessons of a child linked to the caller (<code>is_child_of_parent</code>); for anyone else it returns an empty list. No SELECT policy on <code>profiles</code> was added, so #1096 is not widened. The owner who teaches as an admin is now covered too (the old lookup filtered on <code>is_teacher = true</code>).</li>
+  <li><strong>Remaining English in the panel.</strong> Practice-day labels were English weekday names produced on the server ("Tue"); they are now formatted in the viewer's language from the day key ("wt."). The " min" unit and the child switcher (now a <code>&lt;nav&gt;</code> with an accessible name "Twoje dzieci" / "Your children") go through next-intl. The child switcher's inline style became Tailwind classes, which also lets the active-tab colour from <code>design-tokens.css</code> apply.</li>
+  <li>Migration: <code>supabase/migrations/20261127120000_child_teacher_names.sql</code> (additive, idempotent <code>create or replace</code>, execute granted to <code>authenticated</code> only). <code>database.types.ts</code> gets the matching <code>Functions.child_teacher_names</code> entry; CI's <code>types-drift</code> job regenerates from the branch's migrations and verifies it.</li>
+</ul>
+
+<h2>Automated checks</h2>
+<table>
+  <tr><th>Check</th><th>Result</th></tr>
+  <tr><td><code>npm run lint</code></td><td>0 errors (warnings pre-existing)</td></tr>
+  <tr><td><code>npm run typecheck</code></td><td>pass</td></tr>
+  <tr><td><code>npm test</code></td><td>507 suites, 5757 passed</td></tr>
+  <tr><td><code>npm run check:structure</code></td><td>no new findings</td></tr>
+  <tr><td><code>child-teacher-names.rls.test.ts</code></td><td>runs in CI (RLS job on the self-hosted runner, after the migration is applied there)</td></tr>
+</table>
+
+<h2>How to test manually</h2>
+<ol>
+  <li>After the PR merges into <code>dev</code>, <code>deploy-db.yml</code> applies the migration to the dev stack. Then run <code>npm run dev</code> against it.</li>
+  <li>Sign in as the dev parent account (a parent linked to a student who has lessons with a teacher).</li>
+  <li>Open <code>/dashboard</code> with the Polish locale. Expected:
+    <ul>
+      <li>the hero subtitle reads "… · nauczyciel: &lt;imię i nazwisko&gt;";</li>
+      <li>each upcoming lesson row ends with " · &lt;nauczyciel&gt;";</li>
+      <li>the note card title reads "Ostatnia notatka od: &lt;imię&gt;";</li>
+      <li>no English text anywhere on the page (with practice enabled: weekday labels like "pon.", "wt.", and "Dziś"/"Wczoraj").</li>
+    </ul>
+  </li>
+  <li>With two linked children, the switcher shows both; the active one is highlighted.</li>
+  <li>API check (as the parent, with the parent's access token):
+<pre>POST /rest/v1/rpc/child_teacher_names  {"p_child_id": "&lt;own child id&gt;"}
+→ [{"id": "...", "full_name": "..."}]          (only these two keys)
+POST /rest/v1/rpc/child_teacher_names  {"p_child_id": "&lt;someone else's student id&gt;"}
+→ []
+GET  /rest/v1/profiles?id=eq.&lt;teacher id&gt;&amp;select=*
+→ []                                             (profile row still hidden)</pre>
+  </li>
+  <li>Edge cases: a lesson that was soft-deleted does not reveal its teacher; a child with no lessons shows no teacher and no "nauczyciel:" fragment.</li>
+</ol>
+
+<h2>Not covered</h2>
+<p>No browser screenshots: the function does not exist on the dev stack until the migration is deployed by CI (migrations are not applied by hand from this branch). The <code>'Your child'</code> fallback in <code>parent-dashboard-queries.ts</code> (only used when a child profile has neither name nor e-mail) is still English.</p>
+</body>
+</html>

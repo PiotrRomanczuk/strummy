@@ -25,7 +25,7 @@ import { render as rtlRender } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 
 import plMessages from '@/messages/pl.json';
-import { renderWithIntl as render } from '@/lib/testing/intl-test-utils';
+import { renderPolish, renderWithIntl as render } from '@/lib/testing/intl-test-utils';
 import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
 
 import { ParentDashboard } from './ParentDashboard';
@@ -240,10 +240,75 @@ describe('ParentDashboard', () => {
     expect(screen.getByTestId('parent-songs')).toHaveTextContent('Wonderwall');
   });
 
+  it('labels practice days and minutes in English', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    renderDashboard({});
+    expect(screen.getAllByText('Tue').length).toBeGreaterThan(0);
+    expect(screen.getByText('Today')).toBeInTheDocument();
+    expect(screen.getAllByText('min').length).toBeGreaterThan(0);
+  });
+
+  it('names the child switcher', () => {
+    renderDashboard({
+      childrenList: [child('child-1', 'Lily Park'), child('child-2', 'Max Park')],
+    });
+    expect(screen.getByRole('navigation', { name: 'Your children' })).toBeInTheDocument();
+  });
+
   it('says so when there is no homework, history or songs yet', () => {
     renderDashboard({ child: buildChild({ assignments: [], pastLessons: [], songs: [] }) });
     expect(screen.getByText('No homework from the teacher yet.')).toBeInTheDocument();
     expect(screen.getByText('The first lesson is still ahead.')).toBeInTheDocument();
     expect(screen.getByText('No songs in the repertoire yet.')).toBeInTheDocument();
+  });
+});
+
+describe('ParentDashboard in Polish', () => {
+  const renderPl = (overrides: Partial<ParentChildOverview> = {}, children = 1) =>
+    renderPolish(
+      <ParentDashboard
+        childrenList={[child('child-1', 'Lily Park'), child('child-2', 'Max Park')].slice(
+          0,
+          children
+        )}
+        activeChildId="child-1"
+        child={buildChild(overrides)}
+      />
+    );
+
+  it('shows the note with the teacher and the lesson date in Polish', () => {
+    renderPl();
+    expect(screen.getByText('Ostatnia notatka od: Dana')).toBeInTheDocument();
+    expect(screen.getByText('Po lekcji 14 lip 2026')).toBeInTheDocument();
+    expect(screen.getByText('Nowa')).toBeInTheDocument();
+    expect(screen.queryByText(/Latest note/)).not.toBeInTheDocument();
+  });
+
+  it('shows homework, lessons and billing in Polish', () => {
+    renderPl();
+    expect(screen.getByTestId('parent-assignments')).toHaveTextContent('Po terminie');
+    expect(screen.getByTestId('parent-past-lessons')).toHaveTextContent('Odbyła się');
+    expect(screen.getByText('Najbliższa')).toBeInTheDocument();
+    expect(screen.getByText(/nie prowadzi jeszcze rozliczeń w Strummy/)).toBeInTheDocument();
+  });
+
+  it('labels practice days in Polish', () => {
+    featuresMock.SHOW_PRACTICE_FEATURES = true;
+    renderPl();
+    expect(screen.getByText('W tym tygodniu idzie dobrze')).toBeInTheDocument();
+    expect(screen.getByText('Dziś')).toBeInTheDocument();
+    expect(screen.getAllByText('wt.').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Tue')).not.toBeInTheDocument();
+  });
+
+  it('names the child switcher and says when nothing is there yet', () => {
+    renderPl({ assignments: [], pastLessons: [], songs: [] }, 2);
+    expect(screen.getByRole('navigation', { name: 'Twoje dzieci' })).toBeInTheDocument();
+    expect(screen.getByText('Nauczyciel nie zadał jeszcze nic do ćwiczenia.')).toBeInTheDocument();
+  });
+
+  it('shows the no-child state in Polish', () => {
+    renderPolish(<ParentDashboard childrenList={[]} activeChildId={null} child={null} />);
+    expect(screen.getByText('Nie ma jeszcze podpiętego dziecka')).toBeInTheDocument();
   });
 });

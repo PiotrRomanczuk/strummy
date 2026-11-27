@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import type { ParentChild, ParentChildOverview } from '@/lib/services/parent-dashboard-queries';
 import type { BillingSummary } from '@/lib/services/billing/family-billing.helpers';
@@ -34,30 +35,23 @@ const ChildSwitcher = ({
 }: {
   childrenList: ParentChild[];
   activeChildId: string | null;
-}) => (
-  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
-    {childrenList.map((child) => (
-      <Link
-        key={child.id}
-        href={`/dashboard?view=parent&child=${child.id}`}
-        className="ui-parent-tab"
-        aria-current={child.id === activeChildId ? 'true' : undefined}
-        style={{
-          fontFamily: 'var(--sans)',
-          fontSize: 13,
-          fontWeight: 500,
-          color: 'var(--ink-4)',
-          textDecoration: 'none',
-          border: '1px solid var(--rule)',
-          borderRadius: 999,
-          padding: '6px 14px',
-        }}
-      >
-        {child.name}
-      </Link>
-    ))}
-  </div>
-);
+}) => {
+  const t = useTranslations('ParentHome');
+  return (
+    <nav aria-label={t('childSwitcherLabel')} className="mt-[18px] flex flex-wrap gap-2">
+      {childrenList.map((child) => (
+        <Link
+          key={child.id}
+          href={`/dashboard?view=parent&child=${child.id}`}
+          className="ui-parent-tab rounded-full border border-[var(--rule)] px-3.5 py-1.5 font-[family-name:var(--sans)] text-[13px] font-medium text-[var(--ink-4)] no-underline"
+          aria-current={child.id === activeChildId ? 'true' : undefined}
+        >
+          {child.name}
+        </Link>
+      ))}
+    </nav>
+  );
+};
 
 export const ParentDashboard = ({ childrenList, activeChildId, child, billing = null }: Props) => {
   if (!child) return <ParentDashboardEmpty />;
