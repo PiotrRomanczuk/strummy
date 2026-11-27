@@ -62,6 +62,19 @@ test.describe('Skills Lesson Roadmap', { tag: ['@cross-role', '@skills'] }, () =
       .in('skill_id', [skillIdA, skillIdB]);
   });
 
+  // The fixture skill and the student's marks on it exist only for this file.
+  test.afterAll(async () => {
+    const db = adminClient();
+    const { data } = await db
+      .from('skills')
+      .select('id')
+      .in('name', [FIXTURE_SKILL_A, FIXTURE_SKILL_B]);
+    const ids = (data ?? []).map((row) => row.id as string);
+    if (ids.length === 0) return;
+    await db.from('student_skills').delete().in('skill_id', ids);
+    await db.from('skills').delete().in('id', ids);
+  });
+
   test('Teacher sees the beginner catalog grouped into lessons and can update progress', async ({
     page,
     loginAs,

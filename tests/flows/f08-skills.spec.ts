@@ -61,6 +61,8 @@ test.describe('F08 skills', { tag: ['@flow'] }, () => {
       .gte('created_at', startedAt);
     const attemptIds = (attempts ?? []).map((r) => r.id as string);
     if (attemptIds.length > 0) await db.from('chord_quiz_attempts').delete().in('id', attemptIds);
+    // Playing the quiz also writes the student's spaced-repetition state.
+    await db.from('chord_srs').delete().eq('student_id', studentId).gte('created_at', startedAt);
   });
 
   const attemptCount = async () =>

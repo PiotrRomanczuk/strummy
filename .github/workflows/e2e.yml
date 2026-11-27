@@ -233,6 +233,8 @@ jobs:
           # Stop after the first test that fails all its retries. Set to '0'
           # (e.g. in a manual dispatch) for a full failure report.
           E2E_MAX_FAILURES: '1'
+          # A row a spec created and left behind fails the run (playwright-testing.md).
+          E2E_LEAK_CHECK: strict
         run: bash scripts/e2e-remote/remote-runner.sh
 
       - name: Upload report
@@ -272,6 +274,8 @@ jobs:
           E2E_PORT: '3300'
           # Full report, never fail-fast: the suite result IS the status report.
           E2E_MAX_FAILURES: '0'
+          # A row a spec created and left behind fails the run (playwright-testing.md).
+          E2E_LEAK_CHECK: strict
         run: bash scripts/e2e-remote/remote-runner.sh tests/flows
       - name: Upload report
         if: always()

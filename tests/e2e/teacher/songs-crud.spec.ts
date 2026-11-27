@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeByToken } from '../../helpers/purge';
 import { submitSongsSearch } from '../../helpers/songs-list';
 import { pickSongLevel, submitSongForm } from '../../helpers/song-form';
 
@@ -19,6 +20,9 @@ import { pickSongLevel, submitSongForm } from '../../helpers/song-form';
 const timestamp = Date.now();
 const TEST_SONG_TITLE = `E2E Song ${timestamp}`;
 const TEST_SONG_EDITED = `E2E Song ${timestamp} Edited`;
+
+// DELETE /api/song only sets deleted_at; the rows themselves go here.
+test.afterAll(() => purgeByToken('songs', 'title', timestamp));
 
 test.describe('Teacher Songs CRUD', { tag: ['@teacher', '@songs'] }, () => {
   test.beforeEach(async ({ loginAs }) => {

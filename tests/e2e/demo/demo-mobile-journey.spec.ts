@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeByToken } from '../../helpers/purge';
 import { openNav } from '../../helpers/dashboard';
 import { suppressDemoTour } from '../../helpers/demo-tour';
 import { captureStep } from '../../helpers/screenshot';
@@ -25,6 +26,11 @@ const GROUP = 'demo-mobile';
 
 const hasHorizontalOverflow = (page: import('@playwright/test').Page) =>
   page.evaluate(() => document.body.scrollWidth > window.innerWidth + 1);
+
+const RUN = Date.now();
+
+// The interest form writes a teacher_leads row; nothing else removes it.
+test.afterAll(() => purgeByToken('teacher_leads', 'email', RUN));
 
 test.describe('Demo journey on a phone', { tag: ['@demo', '@mobile', '@screenshots'] }, () => {
   // `locale`, not extraHTTPHeaders: Chromium writes its own Accept-Language and
@@ -138,7 +144,7 @@ test.describe('Demo journey on a phone', { tag: ['@demo', '@mobile', '@screensho
       expect(box!.height, `${id} is under the 44px touch target`).toBeGreaterThanOrEqual(40);
     }
 
-    const email = `e2e-mobile-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+    const email = `e2e-mobile-${RUN}-${Math.random().toString(36).slice(2, 8)}@example.com`;
     await page.getByTestId('lead-name').fill('Anna Testowa');
     await page.getByTestId('lead-email').fill(email);
     await page.getByTestId('lead-pain').fill('Zgłoszenie z testu mobilnego — do usunięcia.');

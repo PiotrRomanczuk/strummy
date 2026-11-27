@@ -50,6 +50,16 @@ test.describe('Student Skills Checklist', { tag: ['@cross-role', '@skills'] }, (
     }
   });
 
+  // The fixture skill and the student's marks on it exist only for this file.
+  test.afterAll(async () => {
+    const db = adminClient();
+    const { data } = await db.from('skills').select('id').in('name', [FIXTURE_SKILL_NAME]);
+    const ids = (data ?? []).map((row) => row.id as string);
+    if (ids.length === 0) return;
+    await db.from('student_skills').delete().in('skill_id', ids);
+    await db.from('skills').delete().in('id', ids);
+  });
+
   test('Admin sees the full beginner catalog and can check off a skill', async ({
     page,
     loginAs,

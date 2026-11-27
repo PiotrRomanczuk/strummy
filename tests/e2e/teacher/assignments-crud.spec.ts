@@ -1,4 +1,5 @@
 import { test, expect } from '../../fixtures';
+import { purgeByToken } from '../../helpers/purge';
 
 import {
   openAssignmentExtras,
@@ -19,26 +20,31 @@ const timestamp = Date.now();
 const TEST_ASSIGNMENT_TITLE = `E2E Assignment ${timestamp}`;
 const TEST_ASSIGNMENT_EDITED = `E2E Assignment ${timestamp} Edited`;
 
+// Also when a test fails before its own delete step.
+test.afterAll(() => purgeByToken('assignments', 'title', timestamp));
+
 test.describe('Teacher Assignments CRUD', { tag: ['@teacher', '@assignments'] }, () => {
   test.beforeEach(async ({ loginAs }) => {
     await loginAs('teacher');
   });
 
-  test('assignments list loads with heading and New Assignment button @mobile', { tag: '@prod-safe' }, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/dashboard/assignments');
-    await page.waitForLoadState('networkidle');
+  test(
+    'assignments list loads with heading and New Assignment button @mobile',
+    { tag: '@prod-safe' },
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto('/dashboard/assignments');
+      await page.waitForLoadState('networkidle');
 
-    await expect(page.getByRole('heading', { name: /assignments/i }).first()).toBeVisible({
-      timeout: 15_000,
-    });
+      await expect(page.getByRole('heading', { name: /assignments/i }).first()).toBeVisible({
+        timeout: 15_000,
+      });
 
-    await expect(page.locator('a[href="/dashboard/assignments/new"]').first()).toBeVisible({
-      timeout: 10_000,
-    });
-  });
+      await expect(page.locator('a[href="/dashboard/assignments/new"]').first()).toBeVisible({
+        timeout: 10_000,
+      });
+    }
+  );
 
   test('assignment CRUD lifecycle: create → view → edit → delete', async ({ page }) => {
     test.setTimeout(120_000);

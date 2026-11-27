@@ -201,6 +201,8 @@ test.describe(
 
         const deleteResp = await page.request.delete(`/api/song?id=${songId}`);
         expect(deleteResp.status()).toBeLessThan(400);
+        // The API delete is a soft delete; the row itself goes here.
+        await adminClient().from('songs').delete().eq('id', songId);
       });
     });
 

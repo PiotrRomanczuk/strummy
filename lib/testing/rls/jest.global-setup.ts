@@ -2,8 +2,9 @@ import './jest.setup-env';
 
 import { createLogger } from '../../logger';
 import { createServiceClient } from './clients';
-import { isRlsTestEnvAvailable } from './env';
-import { rlsRunId } from './run-marker';
+import { isRlsTestEnvAvailable, readRlsEnv } from './env';
+import { runStartedAt } from '../../../tests/helpers/leak-check';
+import { rlsRunId, setRlsRunStartedAt } from './run-marker';
 import { sweepRlsData } from './sweep';
 
 const log = createLogger('rls');
@@ -35,4 +36,6 @@ export default async function rlsGlobalSetup(): Promise<void> {
     );
   }
   for (const error of result.errors) log.warn(`stale sweep: ${error}`);
+  // The leak check in jest.global-teardown.ts reports rows created from here on.
+  setRlsRunStartedAt(await runStartedAt(readRlsEnv()!.supabaseUrl));
 }

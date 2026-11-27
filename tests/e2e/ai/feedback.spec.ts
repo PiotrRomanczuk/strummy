@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
-import { adminClient } from '../../helpers/seed-ids';
+import { purgeOwnedSince } from '../../helpers/purge';
+import { adminClient, getAdminId } from '../../helpers/seed-ids';
 
 /**
  * AIA-2 (docs/app-blueprint/08-ai-assistant.md, Tranche 5) — is_helpful
@@ -8,6 +9,17 @@ import { adminClient } from '../../helpers/seed-ids';
  * for the shared gating pattern).
  */
 test.describe('AI chat feedback', { tag: ['@ai', '@admin'] }, () => {
+  // A few seconds back, so a clock that differs from the database's cannot hide a row.
+  const startedAt = new Date(Date.now() - 5_000);
+
+  // Every message sent here opens a conversation of the admin account; the chat
+  // gives the spec no id to keep. The two AI specs are the only ones that chat
+  // as admin, and each purge can only remove threads newer than its own start.
+  test.afterAll(async () => {
+    const db = adminClient();
+    await purgeOwnedSince('ai_conversations', 'profile_id', await getAdminId(db), startedAt);
+  });
+
   test.beforeEach(async ({ page, loginAs }) => {
     await loginAs('admin');
     await page.goto('/dashboard/ai/chat');
