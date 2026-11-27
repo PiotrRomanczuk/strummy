@@ -1,110 +1,133 @@
 /**
- * Regression tests for GET /api/cron/process-notification-queue.
+ * @jest-environment node
  *
- * Guards auth gating, the happy path (forwards queue + retry stats and
- * runs the auth rate-limit cleanup), and graceful degradation when the
- * underlying queue processor throws.
+ * GET /api/cron/process-notification-queue — called by the daily dispatcher
+ * and by the uwh timer (scripts/ops/notification-queue/). Guards the bearer
+ * check both triggers rely on and the `backlog` field the timer's script reads.
  */
-
-import { NextRequest } from 'next/server';
-import { GET } from '@/app/api/cron/process-notification-queue/route';
-
-jest.mock('next/server', () => {
-  class MockNextResponse {
-    body: unknown;
-    status: number;
-    constructor(body: unknown, init?: { status?: number }) {
-      this.body = body;
-      this.status = init?.status ?? 200;
-    }
-    async json() {
-      return this.body;
-    }
-    static json(data: unknown, init?: { status?: number }) {
-      return { status: init?.status ?? 200, json: async () => data };
-    }
-  }
-  class MockNextRequest {
-    url: string;
-    headers: Headers;
-    constructor(url: string, init?: { headers?: HeadersInit }) {
-      this.url = url;
-      this.headers = new Headers(init?.headers);
-    }
-  }
-  return { NextResponse: MockNextResponse, NextRequest: MockNextRequest };
-});
 
 jest.mock('@/lib/services/notification-queue-processor', () => ({
   processQueuedNotifications: jest.fn(),
   retryFailedNotifications: jest.fn(),
 }));
-
 jest.mock('@/lib/auth/rate-limiter', () => ({
   cleanupExpiredAuthEntries: jest.fn(),
 }));
+jest.mock('@/lib/notifications/notification-logger', () => ({
+  logCronStart: jest.fn(),
+  logCronComplete: jest.fn(),
+  logCronError: jest.fn(),
+}));
+jest.mock('@/lib/notifications/queue-backlog', () => ({
+  readQueueBacklog: jest.fn(),
+}));
 
+import { GET } from '@/app/api/cron/process-notification-queue/route';
 import {
   processQueuedNotifications,
   retryFailedNotifications,
 } from '@/lib/services/notification-queue-processor';
+import { readQueueBacklog } from '@/lib/notifications/queue-backlog';
 import { cleanupExpiredAuthEntries } from '@/lib/auth/rate-limiter';
 
-const CRON_SECRET = 'test-cron-secret';
+const SECRET = 'queue-test-secret';
+const NO_BACKLOG = { overdue: 0, oldestDueAt: null, oldestAgeMinutes: null, isStale: false };
 
-function makeRequest(): Request {
-  return new NextRequest('http://localhost/api/cron/process-notification-queue', {
-    headers: { authorization: `Bearer ${CRON_SECRET}` },
-  });
+function request(authorization?: string): Request {
+  const headers = new Headers();
+  if (authorization !== undefined) headers.set('authorization', authorization);
+  return new Request('http://localhost/api/cron/process-notification-queue', { headers });
 }
 
 describe('GET /api/cron/process-notification-queue', () => {
-  const OLD_ENV = process.env;
+  const original = process.env.CRON_SECRET;
 
   beforeEach(() => {
+    process.env.CRON_SECRET = SECRET;
     jest.clearAllMocks();
-    process.env = { ...OLD_ENV, CRON_SECRET };
+    (processQueuedNotifications as jest.Mock).mockResolvedValue({ processed: 2, failed: 0 });
+    (retryFailedNotifications as jest.Mock).mockResolvedValue({
+      retried: 1,
+      failed: 0,
+      deadLettered: 0,
+    });
+    (readQueueBacklog as jest.Mock).mockResolvedValue(NO_BACKLOG);
   });
 
   afterAll(() => {
-    process.env = OLD_ENV;
+    process.env.CRON_SECRET = original;
   });
 
-  it('returns 401 without a valid cron secret', async () => {
-    const res = await GET(new NextRequest('http://localhost/api/cron/process-notification-queue'));
+  it.each([
+    ['no header', undefined],
+    ['wrong secret', 'Bearer nope'],
+  ])('rejects %s with 401 and touches nothing', async (_label, auth) => {
+    const res = await GET(request(auth));
     expect(res.status).toBe(401);
+    expect(processQueuedNotifications).not.toHaveBeenCalled();
+    expect(readQueueBacklog).not.toHaveBeenCalled();
   });
 
-  it('returns 200 with combined queue + retry stats on success', async () => {
-    (processQueuedNotifications as jest.Mock).mockResolvedValue({ processed: 10, failed: 1 });
-    (retryFailedNotifications as jest.Mock).mockResolvedValue({
-      retried: 3,
-      failed: 1,
-      deadLettered: 0,
-    });
-    (cleanupExpiredAuthEntries as jest.Mock).mockResolvedValue(undefined);
+  it('answers 500 when CRON_SECRET is not configured', async () => {
+    delete process.env.CRON_SECRET;
+    const res = await GET(request(`Bearer ${SECRET}`));
+    expect(res.status).toBe(500);
+    expect(processQueuedNotifications).not.toHaveBeenCalled();
+  });
 
-    const res = await GET(makeRequest());
-    const body = await res.json();
-
+  it('drains, retries and reports an empty backlog', async () => {
+    const res = await GET(request(`Bearer ${SECRET}`));
     expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      success: true,
+      queue: { processed: 2, failed: 0 },
+      retry: { retried: 1, failed: 0, deadLettered: 0 },
+      backlog: NO_BACKLOG,
+    });
+  });
+
+  it('reads the backlog after the drain', async () => {
+    await GET(request(`Bearer ${SECRET}`));
+    const drained = (processQueuedNotifications as jest.Mock).mock.invocationCallOrder[0];
+    const read = (readQueueBacklog as jest.Mock).mock.invocationCallOrder[0];
+    expect(read).toBeGreaterThan(drained);
+  });
+
+  it('passes a stale backlog through for the timer to alarm on', async () => {
+    const stale = {
+      overdue: 4,
+      oldestDueAt: '2026-11-27T09:00:00.000Z',
+      oldestAgeMinutes: 180,
+      isStale: true,
+    };
+    (readQueueBacklog as jest.Mock).mockResolvedValue(stale);
+    const body = await (await GET(request(`Bearer ${SECRET}`))).json();
     expect(body.success).toBe(true);
-    expect(body.queue).toEqual({ processed: 10, failed: 1 });
-    expect(body.retry).toEqual({ retried: 3, failed: 1, deadLettered: 0 });
+    expect(body.backlog).toEqual(stale);
+  });
+
+  it('drains 100 at a time and runs the rate-limit cleanup', async () => {
+    await GET(request(`Bearer ${SECRET}`));
     expect(processQueuedNotifications).toHaveBeenCalledWith(100);
     expect(cleanupExpiredAuthEntries).toHaveBeenCalledTimes(1);
   });
 
-  it('returns 200 (not 500) when processQueuedNotifications throws', async () => {
+  it('answers 200 with success: false when the processor throws', async () => {
     (processQueuedNotifications as jest.Mock).mockRejectedValue(new Error('queue DB down'));
-
-    const res = await GET(makeRequest());
-    const body = await res.json();
-
+    const res = await GET(request(`Bearer ${SECRET}`));
     expect(res.status).toBe(200);
-    expect(body.success).toBe(false);
-    expect(body.error).toBe('Internal Server Error');
-    // Subsequent steps should not run once processing throws
+    expect((await res.json()).success).toBe(false);
     expect(retryFailedNotifications).not.toHaveBeenCalled();
+    expect(readQueueBacklog).not.toHaveBeenCalled();
+  });
+
+  it('reports success: false when the backlog cannot be read', async () => {
+    (readQueueBacklog as jest.Mock).mockRejectedValue(new Error('db down'));
+    const res = await GET(request(`Bearer ${SECRET}`));
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      success: false,
+      error: 'Internal Server Error',
+    });
   });
 });

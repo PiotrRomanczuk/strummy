@@ -1,0 +1,21 @@
+# systemd USER unit — install: see README.md in this directory.
+# Drains production's queue (instance "prod" of trigger.sh). Not a template:
+# OnFailure=unit-failure-mail@%n.service needs %n without a second "@".
+[Unit]
+Description=Strummy — drain the notification queue (prod)
+Documentation=https://github.com/PiotrRomanczuk/strummy/tree/main/scripts/ops/notification-queue
+After=network-online.target
+# Same checkout as nightly-e2e: the prod-audit cycle resets it to origin/main
+# every 4 hours and nothing edits it. Skips cleanly while it predates this
+# directory, and stays inert until the secret is in place.
+ConditionPathExists=%h/strummy-prod-e2e/checkout/scripts/ops/notification-queue/trigger.sh
+ConditionPathExists=%h/.config/strummy/notification-queue-prod.secret
+# The alarm: a failed run (call failed, or mail pending > 1 h past due) mails
+# the journal through home-ops' notifier (ops/elitedesk/unit-failure-mail@).
+OnFailure=unit-failure-mail@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/strummy-prod-e2e/checkout/scripts/ops/notification-queue/trigger.sh prod
+# One HTTP call (curl -m 90); the route's own limit is 60 s.
+TimeoutStartSec=3min

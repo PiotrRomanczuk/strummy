@@ -9,7 +9,7 @@ description: Inspect and troubleshoot cron job execution in Strummy. Use when a 
 
 Inspect, test, and troubleshoot the 12 cron jobs in Strummy. Supports four actions: list (overview), test (invoke locally), history (recent executions), and diagnose (root-cause analysis for failures).
 
-**Cron architecture**: Jobs run from Vercel cron (`vercel.json`); an optional trigger from `uwh` lives in `scripts/cron/` (inactive unless installed — see its README). There is no GitHub Actions cron workflow. A dispatcher (`/api/cron/dispatcher`) orchestrates daily jobs into a single Vercel cron invocation to work within the Hobby plan limit.
+**Cron architecture**: Jobs run from Vercel cron (`vercel.json`); `process-notification-queue` is also drained every 10 minutes by a systemd user timer on `uwh` (`scripts/ops/notification-queue/`, once installed — see its README). There is no GitHub Actions cron workflow. A dispatcher (`/api/cron/dispatcher`) orchestrates daily jobs into a single Vercel cron invocation to work within the Hobby plan limit.
 
 ## Usage
 
@@ -30,10 +30,10 @@ Display all cron jobs in a summary table.
 Read these files to build the table:
 
 - `vercel.json` (Vercel cron definitions)
-- `scripts/cron/README.md` (optional uwh timers — check whether they are installed)
+- `scripts/ops/notification-queue/README.md` (uwh timer for the queue — check whether it is installed)
 - `app/api/cron/dispatcher/route.ts` (dispatcher job registry)
 
-Output a table with columns: #, Job Name, Schedule (cron expression), Human-Readable, Platform (Vercel / uwh timer), Via Dispatcher (Yes/No). Parse schedules from `vercel.json`; jobs reached only through the dispatcher run once a day unless the optional uwh timers (`scripts/cron/`) are installed — say which applies.
+Output a table with columns: #, Job Name, Schedule (cron expression), Human-Readable, Platform (Vercel / uwh timer), Via Dispatcher (Yes/No). Parse schedules from `vercel.json`; jobs reached only through the dispatcher run once a day; `process-notification-queue` also every 10 minutes when the uwh timer (`scripts/ops/notification-queue/`) is installed — say which applies.
 
 ### test
 
@@ -69,7 +69,7 @@ Check recent execution history. Two sources depending on platform:
 
 **Vercel**: Use `npx vercel logs --filter "cron" --since 24h` (requires Vercel CLI).
 
-**uwh timers** (only if installed): `ssh uwh 'systemctl --user list-timers "strummy-cron*"; journalctl --user -u strummy-cron-queue -n 50'`.
+**uwh timer** (only if installed): `ssh uwh 'systemctl --user list-timers "strummy-notification-queue*"; journalctl --user -u "strummy-notification-queue@*" -n 50'`.
 
 Output a table with: Run ID, Job, Status, Started, Duration. For failures, show error details.
 
@@ -133,21 +133,21 @@ TODO 1: Extract inline logic into service functions
 TODO 2: Add per-job timeout (currently no timeout per job)
 TODO 3: Evaluate job frequency (some may not need daily runs)
 TODO 4: Add structured logging / Sentry breadcrumbs
-TODO 5: Decide Vercel-only vs the uwh timers (scripts/cron/README.md)
+TODO 5: Is the uwh queue timer installed? (scripts/ops/notification-queue/README.md)
 ```
 
 6. **Output diagnosis**: Show route file info, auth method, env var status ([OK]/[MISSING]), dependency chain status, common issues check, and prioritized recommendations.
 
 ## Key Project Files
 
-| File                                       | Role                                                                            |
-| ------------------------------------------ | ------------------------------------------------------------------------------- |
-| `vercel.json`                              | Vercel cron schedule definitions (11 jobs)                                      |
-| `scripts/cron/`                            | Optional uwh systemd timers (`strummy-cron-{daily,queue}`), inactive by default |
-| `app/api/cron/dispatcher/route.ts`         | Central dispatcher (orchestrates all daily jobs)                                |
-| `lib/auth/cron-auth.ts`                    | `verifyCronSecret()` authentication function                                    |
-| `lib/notifications/notification-logger.ts` | `logCronStart`, `logCronComplete`, `logCronError`                               |
-| `app/api/cron/*/route.ts`                  | Individual cron job route handlers                                              |
+| File                                       | Role                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------- |
+| `vercel.json`                              | Vercel cron schedule definitions (11 jobs)                          |
+| `scripts/ops/notification-queue/`          | uwh timer: drains the queue every 10 min, alarms on mail > 1 h late |
+| `app/api/cron/dispatcher/route.ts`         | Central dispatcher (orchestrates all daily jobs)                    |
+| `lib/auth/cron-auth.ts`                    | `verifyCronSecret()` authentication function                        |
+| `lib/notifications/notification-logger.ts` | `logCronStart`, `logCronComplete`, `logCronError`                   |
+| `app/api/cron/*/route.ts`                  | Individual cron job route handlers                                  |
 
 ## Cron Job Reference
 

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual test — notification queue timer (#1215)</title>
+<style>
+  :root { --bg:#fff; --fg:#1f2328; --muted:#59636e; --card:#f6f8fa; --line:#d1d9e0; --ok:#1a7f37; --warn:#9a6700; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --card:#161b22; --line:#30363d; --ok:#3fb950; --warn:#d29922; } }
+  body { background:var(--bg); color:var(--fg); font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:1.5rem; margin-bottom:4px; } h2 { margin-top:2rem; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .meta { color:var(--muted); font-size:.9rem; }
+  code, pre { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.88em; }
+  pre { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:12px; overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:.92rem; } td, th { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  .ok { color:var(--ok); font-weight:600; } .warn { color:var(--warn); font-weight:600; }
+  li { margin:4px 0; }
+</style>
+</head>
+<body>
+<h1>Notification queue drained every 10 minutes (#1215)</h1>
+<p class="meta">Date: 2026-11-27 · Branch: <code>feature/notification-queue-timer</code> → <code>dev</code> · No browser used (backend + ops change)</p>
+
+<h2>What changed</h2>
+<ul>
+  <li><strong>Before:</strong> the only trigger of <code>/api/cron/process-notification-queue</code> was the daily Vercel dispatcher (06:00 UTC). Mail scheduled "1 hour after the lesson", "immediate" cancellations and retries waited until the next morning.</li>
+  <li><strong>New trigger:</strong> <code>scripts/ops/notification-queue/</code> — a systemd user timer for <code>uwh</code> (:05, :15 … :55) runs <code>trigger.sh prod</code>, which GETs the route on <code>strummy.online</code> with the same <code>CRON_SECRET</code> bearer as the dispatcher. The secret is read from a mode-600 file on the host and passed to curl on stdin.</li>
+  <li><strong>Backlog report:</strong> the route now returns <code>backlog: { overdue, oldestDueAt, oldestAgeMinutes, isStale }</code> — rows still <code>pending</code> more than 60 min after <code>scheduled_for</code>, read after the drain (<code>lib/notifications/queue-backlog.ts</code>).</li>
+  <li><strong>Alarm:</strong> the script exits 1 when the call fails or <code>isStale</code> is true; the unit's <code>OnFailure=unit-failure-mail@%n.service</code> (home-ops notifier) mails the journal. Repeats at most every 6 h while the problem lasts.</li>
+  <li>Route header no longer claims "every 15 minutes". The never-activated <code>scripts/cron/</code> (whose daily mode would now double-fire next to the dispatcher) is removed; the cron-debugger skill and blueprint 07 point at the new directory.</li>
+  <li><strong>Not installed yet.</strong> Installation on uwh happens after the change reaches <code>main</code> — steps in <code>scripts/ops/notification-queue/README.md</code>.</li>
+</ul>
+
+<h2>Automated checks run</h2>
+<table>
+  <tr><th>Check</th><th>Result</th></tr>
+  <tr><td><code>npm run lint</code></td><td class="ok">0 errors (warnings unchanged; none in changed files)</td></tr>
+  <tr><td><code>npm run typecheck</code></td><td class="ok">pass</td></tr>
+  <tr><td><code>npm test</code></td><td class="ok">508 suites, 5762 passed, 1 skipped</td></tr>
+  <tr><td><code>npm run check:structure</code></td><td class="ok">no new findings</td></tr>
+  <tr><td><code>bash -n</code> + <code>shellcheck</code> on <code>trigger.sh</code>, <code>install.sh</code></td><td class="ok">clean</td></tr>
+  <tr><td><code>trigger.sh</code> against a fake local server (scratch harness)</td><td class="ok">secret mode 644 → exit 64; ok → 0; stale → 1, then throttled → 0; window 0 → 1 again; wrong secret (401) → 1; recovery clears the stamp; server down → <code>HTTP 000</code>, exit 1</td></tr>
+</table>
+
+<h2>How to test manually — dev stack + Mailpit (F10.4)</h2>
+<p><strong>Prerequisites:</strong> Mac on the home LAN; <code>.env.local</code> pointing at <code>StrummyDevelopment</code> with <code>CRON_SECRET</code>, <code>SMTP_HOST</code> at the dev Mailpit and <code>STUDENT_EMAILS_ENABLED=true</code> (the same setup Core flows F10.4 needs).</p>
+<ol>
+  <li>Start the app on this branch: <code>npm run dev</code> (http://localhost:3000).</li>
+  <li>Check the route by hand; expect <code>success:true</code> and a <code>backlog</code> object:
+<pre>curl -s -H "Authorization: Bearer $(grep ^CRON_SECRET= .env.local | cut -d= -f2-)" \
+  http://localhost:3000/api/cron/process-notification-queue | python3 -m json.tool</pre>
+  Without the header: <code>401 Unauthorized</code>.</li>
+  <li>Configure a <code>dev</code> instance for the script in a throwaway directory (never commit these files):
+<pre>D=$(mktemp -d); echo 'STRUMMY_BASE_URL=http://localhost:3000' &gt; $D/notification-queue-dev.env
+(umask 077; grep ^CRON_SECRET= .env.local | cut -d= -f2- &gt; $D/notification-queue-dev.secret)
+STRUMMY_QUEUE_CONFIG_DIR=$D XDG_STATE_HOME=$D/state scripts/ops/notification-queue/trigger.sh dev; echo "exit=$?"</pre>
+  Expected: <code>[notification-queue dev] ok sent=… overdue=0</code>, <code>exit=0</code>.</li>
+  <li><strong>Delivery within 15 minutes (F10.4):</strong> run the flow, which inserts a queued reminder for the flow student and drains it the way the timer does:
+<pre>npm run test:flows -- --grep "F10.4"</pre>
+  Expected: pass; the mail "Upcoming Lesson Reminder" is in Mailpit and the queue row is <code>sent</code>. To see it end to end with the script instead of the spec: insert a <code>pending</code> row with <code>scheduled_for = now()</code> for a dev student (admin client / Studio on the dev stack only), run step 3's command, and open Mailpit — the mail is there at once; on uwh the next timer tick is at most 10 minutes away.</li>
+  <li><strong>Alarm:</strong> insert a <code>pending</code> row with <code>scheduled_for = now() - interval '2 hours'</code> for a recipient whose mail is skipped or failing (or stop the drain by pointing <code>SMTP_HOST</code> at nothing), run step 3: expect a <code>stale … overdue=1 age_min=120</code> line, <code>ALARM</code>, <code>exit=1</code>; run again: "alarm already raised … not repeating yet", <code>exit=0</code>. Delete the row afterwards (dev stack is shared).</li>
+  <li>Clean up: <code>rm -rf $D</code>.</li>
+</ol>
+
+<h2>After merge to <code>main</code> — production (owner, on uwh)</h2>
+<ol>
+  <li><code>cd ~/strummy-prod-e2e/checkout/scripts/ops/notification-queue &amp;&amp; ./install.sh</code></li>
+  <li>From the Mac: <code>secret strummy-prod-cron-secret | ssh uwh 'umask 077 &amp;&amp; cat &gt; ~/.config/strummy/notification-queue-prod.secret'</code> (create the Bitwarden item first if it does not exist — README).</li>
+  <li><code>./trigger.sh prod; echo $?</code> → <code>ok … overdue=0</code>, 0. Then <code>./install.sh --enable</code>.</li>
+  <li><code>journalctl --user -u strummy-notification-queue -n 20</code> after 10–20 minutes shows a line per run.</li>
+  <li class="warn">Then close #1215.</li>
+</ol>
+
+<h2>Edge cases worth a look</h2>
+<ul>
+  <li>Rows scheduled in the future (lesson recap +1 h) are not "late" — age is measured from <code>scheduled_for</code>.</li>
+  <li>Production before the route change reaches <code>main</code>: the script logs <code>backlog=unreported</code> and still exits 0.</li>
+  <li>The 06:00 UTC dispatcher and the timer never drain at the same moment (timer fires at :05).</li>
+</ul>
+</body>
+</html>

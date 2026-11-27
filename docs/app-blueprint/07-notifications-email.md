@@ -56,8 +56,8 @@ skipped, not bounced.
 ## Behavior & rules
 
 1. **Enqueue** — DB triggers (above) or app code insert into `notification_queue`.
-2. **Process** — `app/api/cron/process-notification-queue` (also run by the daily cron
-   `dispatcher`) calls `lib/services/notification-queue-processor.ts`: claims a batch via the
+2. **Process** — `app/api/cron/process-notification-queue` (run by the daily cron
+   `dispatcher` and every 10 minutes by the uwh timer, `scripts/ops/notification-queue/`) calls `lib/services/notification-queue-processor.ts`: claims a batch via the
    `get_pending_notifications` RPC, dedups by entity, retries failures with backoff.
 3. **Route** — `lib/services/notification-service.ts` resolves the channel per send:
    preference check (`is_notification_enabled`), then `getDeliveryChannel()`

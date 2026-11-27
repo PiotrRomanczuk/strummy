@@ -1,0 +1,14 @@
+[Unit]
+Description=Strummy — drain the notification queue (prod) every 10 minutes
+
+[Timer]
+# :05, :15, … :55 — never on the hour, so the 06:05 run starts after the daily
+# Vercel dispatcher (06:00 UTC, maxDuration 60 s) has finished its own drain.
+# Two drains at once could both pick the same pending row.
+OnCalendar=*-*-* *:05/10:00
+AccuracySec=30s
+# No Persistent: the next run is at most 10 minutes away.
+Unit=strummy-notification-queue.service
+
+[Install]
+WantedBy=timers.target
