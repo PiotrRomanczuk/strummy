@@ -57,6 +57,20 @@ describe('songCardFromRows', () => {
     expect(card?.parts[0].bass).toBeNull();
   });
 
+  it('writes a minor song`s degrees against its own tonic (#1242)', () => {
+    const [intro, ...rest] = CARD_SEGMENTS_ROW.parts;
+    const minorIntro = { ...intro, roman: ['i', 'bVI', 'bIII'], loop: ['i', 'bVI', 'bIII'] };
+    const card = songCardFromRows(
+      { ...CARD_ANALYSIS_ROW, key: { tonic: 'A', scale: 'minor' } },
+      { ...CARD_SEGMENTS_ROW, parts: [minorIntro, ...rest] }
+    );
+    expect(card?.parts[0]).toMatchObject({
+      roman: ['i', 'VI', 'III'],
+      loop: ['i', 'VI', 'III'],
+      group: 'intro:i-VI-III',
+    });
+  });
+
   it('leaves the parts out when they were heard in another recording', () => {
     const other = { ...CARD_SEGMENTS_ROW, recording_url: 'https://youtu.be/AAAAAAAAAAA' };
     const card = songCardFromRows(CARD_ANALYSIS_ROW, other);

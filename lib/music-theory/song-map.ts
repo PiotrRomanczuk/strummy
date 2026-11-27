@@ -1,5 +1,7 @@
 import type { BassNote, SongPart } from '@/schemas/SongSegmentsSchema';
 
+import { tonicNumeral } from './roman-numeral';
+
 /**
  * Pure helpers of the song map card (SNG-16): what a part of a song2logic analysis is called, the loop it is
  * built from, and its drum and bass patterns as cells of a sixteenth grid.
@@ -105,4 +107,35 @@ export function riffCells(riff: BassNote[], slots: number, withNames: boolean): 
 export function splitKey(songKey: string): { tonic: string; isMinor: boolean } {
   const [tonic = songKey, scale = ''] = songKey.trim().split(/\s+/);
   return { tonic, isMinor: scale.toLowerCase() === 'minor' };
+}
+
+export interface PartRun {
+  /** Index of the run's first part. */
+  start: number;
+  /** How many parts in a row it holds (Intro ×4). */
+  count: number;
+  bars: number;
+}
+
+/** Consecutive parts of the same name (or letter, when unnamed) as one run, so the strip reads "Intro ×4". */
+export function partRuns(parts: Pick<SongPart, 'name' | 'label' | 'bars'>[]): PartRun[] {
+  const runs: PartRun[] = [];
+  parts.forEach((part, i) => {
+    const last = runs.at(-1);
+    const before = parts[i - 1];
+    if (last && before && (before.name ?? before.label) === (part.name ?? part.label)) {
+      last.count += 1;
+      last.bars += part.bars;
+    } else runs.push({ start: i, count: 1, bars: part.bars });
+  });
+  return runs;
+}
+
+/** The parts with song2logic's numerals rewritten in the app's convention (degrees of the song's own mode). */
+export function withTonicNumerals<T extends Pick<SongPart, 'roman' | 'loop'>>(
+  parts: T[],
+  isMinor: boolean
+): T[] {
+  const convert = (numerals: string[]) => numerals.map((n) => tonicNumeral(n, isMinor));
+  return parts.map((part) => ({ ...part, roman: convert(part.roman), loop: convert(part.loop) }));
 }

@@ -9,9 +9,9 @@ const blues = { roman: ['I', 'IV', 'V'], chords: ['A', 'D', 'E'], bars: 12 };
 
 describe('progressions of the repertoire', () => {
   const songs = [
-    makeSong('a', { analysis: { progressions: [pop, blues] }, students: 1 }),
+    makeSong('a', { analysis: { key: 'G', progressions: [pop, blues] }, students: 1 }),
     makeSong('b', {
-      analysis: { progressions: [{ ...pop, chords: ['C', 'G', 'Am', 'F'] }] },
+      analysis: { key: 'C', progressions: [{ ...pop, chords: ['C', 'G', 'Am', 'F'] }] },
       students: 4,
     }),
     makeSong('c', { analysis: null }),
@@ -92,6 +92,28 @@ describe('sectionsOf', () => {
       { label: 'B', bars: 1, startS: 6, chords: ['D'], roman: ['V'] },
     ]);
     expect(sectionsOf('nope', [], [])).toEqual([]);
+  });
+
+  it('writes a minor song`s degrees against its own tonic', () => {
+    const [section] = sectionsOf(
+      [{ label: 'A', bars: 2, start_s: 0, first_bar: 1 }],
+      [
+        { bar: 1, chord: 'Em' },
+        { bar: 2, chord: 'C' },
+      ],
+      [
+        { chord: 'Em', roman: 'i' },
+        { chord: 'C', roman: 'bVI' },
+      ],
+      true
+    );
+    expect(section.roman).toEqual(['i', 'VI']);
+  });
+});
+
+describe('measured progressions', () => {
+  it('reads song2logic`s minor numerals in the app`s convention', () => {
+    expect(makeSong('m').measured?.progressions[0].roman).toEqual(['i', 'III', 'VII', 'IV']);
   });
 });
 

@@ -1,7 +1,8 @@
 import type { BassNote, Groove, SongPart } from '@/schemas/SongSegmentsSchema';
 import type { CardCapo, CardChord, CardGrid } from '@/schemas/SongCardSchema';
 
-import { partKind, splitKey, type PartKind } from './song-map';
+import { partKind, splitKey, withTonicNumerals, type PartKind } from './song-map';
+import { recordingTempo, type SongTempo } from './song-tempo';
 
 /**
  * The song card (SNG-17): one recording's analysis as bars in seconds, the parts over them and the guitar's
@@ -42,7 +43,10 @@ export interface CardPart {
 
 export interface SongCard {
   duration: number;
+  /** The beat the analysis counted: the beat grid and the backing track run on it. */
   bpm: number;
+  /** The tempo to show and practise from (`song-tempo.ts`): the counted beat at the song's pulse. */
+  tempo: SongTempo;
   beatsPerBar: number;
   key: { tonic: string; isMinor: boolean } | null;
   bars: CardBar[];
@@ -64,6 +68,8 @@ export interface SongCardInput {
   chords: CardChord[];
   rhythm: { track: string; pattern: string }[];
   capo: CardCapo | null;
+  songBpm?: number | null; // the teacher's tempo (`songs.tempo`)
+  feltBpm?: number | null; // song2logic's felt tempo of a half-time feel
   /** Present only when they were heard in the same recording as the analysis. */
   segments: { parts: SongPart[]; bassBars: (BassNote[][] | null)[] } | null;
 }
@@ -124,13 +130,22 @@ export function cardParts(parts: SongPart[], bassBars: (BassNote[][] | null)[]):
 export function buildSongCard(input: SongCardInput): SongCard {
   const duration = input.duration ?? input.grid.beats_s.at(-1) ?? 0;
   const guitar = input.rhythm.find((track) => track.track === GUITAR_TRACK);
+  const key = input.key ? splitKey(`${input.key.tonic} ${input.key.scale}`) : null;
+  const parts = input.segments
+    ? withTonicNumerals(input.segments.parts, key?.isMinor ?? false)
+    : null;
   return {
     duration,
     bpm: input.grid.bpm,
+    tempo: recordingTempo({
+      recordingBpm: input.grid.bpm,
+      feltBpm: input.feltBpm ?? null,
+      songBpm: input.songBpm ?? null,
+    }),
     beatsPerBar: input.grid.beats_per_bar,
-    key: input.key ? splitKey(`${input.key.tonic} ${input.key.scale}`) : null,
+    key,
     bars: cardBars(input.grid, input.chords, duration),
-    parts: input.segments ? cardParts(input.segments.parts, input.segments.bassBars) : [],
+    parts: parts && input.segments ? cardParts(parts, input.segments.bassBars) : [],
     strum: guitar?.pattern.length === SLOTS ? guitar.pattern : null,
     capo: input.capo && input.capo.fret > 0 ? input.capo : null,
     youtubeId: youtubeId(input.sourceUrl),

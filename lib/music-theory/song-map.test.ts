@@ -1,4 +1,13 @@
-import { partColours, partKind, partLoop, patternCells, riffCells, splitKey } from './song-map';
+import {
+  partColours,
+  partKind,
+  partLoop,
+  partRuns,
+  patternCells,
+  riffCells,
+  splitKey,
+  withTonicNumerals,
+} from './song-map';
 
 const note = (slot: number, sixteenths: number, name = 'E2') => ({
   slot,
@@ -78,6 +87,63 @@ describe('patternCells / riffCells', () => {
     const cells = riffCells([note(0, 2), note(20, 2)], 16, false);
     expect(cells[0]).toMatchObject({ span: 2, level: 'on', text: '' });
     expect(cells.reduce((sum, c) => sum + c.span, 0)).toBe(16);
+  });
+});
+
+describe('partRuns', () => {
+  const named = (names: string[]) => names.map((name) => ({ name, label: 'A', bars: 4 }));
+
+  it('groups back-to-back repeats of a part, like Hotel California`s 24 parts into 8 runs', () => {
+    const form = [
+      ...Array<string>(4).fill('intro'),
+      ...Array<string>(4).fill('verse'),
+      'chorus',
+      'chorus',
+      'verse',
+      'verse',
+      'verse',
+      'chorus',
+      'chorus',
+      'bridge',
+      'bridge',
+      'chorus',
+      'chorus',
+      ...Array<string>(5).fill('solo'),
+    ];
+    const runs = partRuns(named(form));
+    expect(runs.map((run) => [form[run.start], run.count])).toEqual([
+      ['intro', 4],
+      ['verse', 4],
+      ['chorus', 2],
+      ['verse', 3],
+      ['chorus', 2],
+      ['bridge', 2],
+      ['chorus', 2],
+      ['solo', 5],
+    ]);
+    expect(runs[0]).toEqual({ start: 0, count: 4, bars: 16 });
+    expect(form).toHaveLength(24);
+    expect(runs.reduce((sum, run) => sum + run.count, 0)).toBe(24);
+  });
+
+  it('groups unnamed parts by letter and keeps a lone part on its own', () => {
+    const lettered = ['A', 'A', 'B', 'A'].map((label) => ({ name: null, label, bars: 8 }));
+    expect(partRuns(lettered)).toEqual([
+      { start: 0, count: 2, bars: 16 },
+      { start: 2, count: 1, bars: 8 },
+      { start: 3, count: 1, bars: 8 },
+    ]);
+    expect(partRuns([])).toEqual([]);
+  });
+});
+
+describe('withTonicNumerals', () => {
+  it('rewrites song2logic`s major-relative numerals of a minor song, loop included', () => {
+    const [part] = withTonicNumerals(
+      [{ roman: ['i', 'bVII IV', 'bVI'], loop: ['i', 'bVII'] }],
+      true
+    );
+    expect(part).toEqual({ roman: ['i', 'VII IV', 'VI'], loop: ['i', 'VII'] });
   });
 });
 

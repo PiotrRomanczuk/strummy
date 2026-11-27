@@ -8,6 +8,7 @@ import * as z from 'zod';
 
 import type { ParsedChord } from '@/lib/music-theory/chord-parser';
 import { extractChordSequence } from '@/lib/music-theory/chord-sequence';
+import { tonicNumeral } from '@/lib/music-theory/roman-numeral';
 
 import { chordShift, isChordSymbol, knownChords, triad } from './chord-agreement';
 import { collapse } from './progressions';
@@ -114,13 +115,17 @@ export const SECTION_CHORDS = 6;
 export function sectionsOf(
   sections: unknown,
   barChords: unknown,
-  vocabulary: unknown
+  vocabulary: unknown,
+  isMinorKey = false
 ): SongSection[] {
   const parsed = SectionsSchema.safeParse(sections);
   if (!parsed.success) return [];
   const bars = BarChordsSchema.safeParse(barChords);
   const romans = new Map(
-    (VocabularySchema.safeParse(vocabulary).data ?? []).map((entry) => [entry.chord, entry.roman])
+    (VocabularySchema.safeParse(vocabulary).data ?? []).map((entry) => [
+      entry.chord,
+      tonicNumeral(entry.roman, isMinorKey),
+    ])
   );
   return parsed.data.map((section) => {
     const inside = (bars.data ?? [])

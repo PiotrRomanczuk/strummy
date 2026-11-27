@@ -3,13 +3,18 @@ import '@testing-library/jest-dom';
 
 import { renderServerTree } from '@/lib/testing/intl-test-utils';
 import { getSongMap, type SongMapView } from '@/lib/services/song-segments-queries';
+import { getSongTiming } from '@/lib/services/song-timing-queries';
+import { resolveSongTiming } from '@/lib/music-theory/song-tempo';
 import type { SongPart } from '@/schemas/SongSegmentsSchema';
 
 import { SongMapCard } from './SongMapCard';
 
 jest.mock('@/lib/services/song-segments-queries', () => ({ getSongMap: jest.fn() }));
+jest.mock('@/lib/services/song-timing-queries', () => ({ getSongTiming: jest.fn() }));
 
 const mockedGet = jest.mocked(getSongMap);
+const mockedTiming = jest.mocked(getSongTiming);
+const summaryText = () => screen.getByTestId('song-tempo').parentElement?.textContent;
 
 const part = (n: number, overrides: Partial<SongPart> = {}): SongPart => ({
   n,
@@ -76,7 +81,10 @@ const VIEW: SongMapView = {
 };
 
 describe('SongMapCard', () => {
-  beforeEach(() => mockedGet.mockReset());
+  beforeEach(() => {
+    mockedGet.mockReset();
+    mockedTiming.mockReset().mockResolvedValue(null);
+  });
 
   it('shows the form as a strip and the first part without drums or bass', async () => {
     mockedGet.mockResolvedValue(VIEW);
@@ -84,7 +92,7 @@ describe('SongMapCard', () => {
 
     expect(mockedGet).toHaveBeenCalledWith('song-1');
     expect(screen.getByText('Parts, chords and groove')).toBeInTheDocument();
-    expect(screen.getByText('88 BPM · E minor · 4/4 · 4 parts')).toBeInTheDocument();
+    expect(summaryText()).toBe('88 BPM · E minor · 4/4 · 4 parts');
     const strip = screen.getByRole('group', { name: 'Parts of the song' });
     expect(within(strip).getAllByRole('button')).toHaveLength(4);
     expect(within(strip).getByRole('button', { name: '1. Intro, 4 bars' })).toHaveAttribute(
@@ -94,7 +102,7 @@ describe('SongMapCard', () => {
     expect(screen.getByText('4 bars · 88 BPM · no vocals')).toBeInTheDocument(); // played once: no loop
     expect(screen.getByText('No drums in this part.')).toBeInTheDocument();
     expect(screen.getByText('No bass in this part.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Analysed recording (2026-11-17)' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Analysed recording (Nov 17, 2026)' })).toHaveAttribute(
       'href',
       VIEW.recordingUrl
     );
@@ -139,8 +147,73 @@ describe('SongMapCard', () => {
       parts: [part(1, { name: null, label: 'C' })],
     });
     await renderServerTree(<SongMapCard songId="song-1" />);
-    expect(screen.getByText('111 BPM (felt at 56) · E minor · 4/4 · 1 part')).toBeInTheDocument();
+    expect(summaryText()).toBe(
+      '56 BPMcounted at 111 BPM in the recording · E minor · 4/4 · 1 part'
+    );
     expect(screen.getByRole('button', { name: '1. C, 8 bars' })).toBeInTheDocument();
+  });
+
+  it('shows back-to-back repeats as one chip and steps through each repeat', async () => {
+    mockedGet.mockResolvedValue({
+      ...VIEW,
+      parts: [
+        part(1, { name: 'intro', bars: 4 }),
+        part(2, { name: 'intro', bars: 4, chords: ['Am', 'G', 'D', 'A'] }),
+        part(3, { name: 'intro', bars: 2 }),
+        part(4),
+      ],
+    });
+    await renderServerTree(<SongMapCard songId="song-1" />);
+
+    const strip = screen.getByRole('group', { name: 'Parts of the song' });
+    expect(within(strip).getAllByRole('button')).toHaveLength(2);
+    const intro = within(strip).getByRole('button', { name: 'Intro ×3, parts 1–3, 10 bars' });
+    expect(intro).toHaveTextContent('Intro×3');
+    expect(intro).toHaveAttribute('aria-pressed', 'true');
+
+    const repeats = screen.getByRole('group', { name: 'Repeats of Intro' });
+    expect(within(repeats).getAllByRole('button')).toHaveLength(3);
+    fireEvent.click(screen.getByRole('button', { name: 'Intro 2 of 3 (part 2, 4 bars)' }));
+    expect(screen.getByText('2. Intro')).toBeInTheDocument();
+    const chords = within(screen.getByRole('region', { name: 'Chords' })).getAllByRole('listitem');
+    expect(chords[0]).toHaveTextContent('Am');
+    expect(intro).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(within(strip).getByRole('button', { name: '4. Verse, 8 bars' }));
+    expect(screen.queryByRole('group', { name: /^Repeats of/ })).not.toBeInTheDocument();
+    expect(screen.getByText('4. Verse')).toBeInTheDocument();
+  });
+
+  it("shows the song's one tempo and the analysis date, and scales the parts' tempo with it", async () => {
+    mockedGet.mockResolvedValue({ ...VIEW, bpm: 142.86, parts: [part(1, { bpm: 142.86 })] });
+    mockedTiming.mockResolvedValue(
+      resolveSongTiming(
+        { tempo: 69, durationMs: 388000 },
+        { bpm: 142.86, feltBpm: null, durationSeconds: 385.8, analysedOn: '2026-11-10' }
+      )
+    );
+    await renderServerTree(<SongMapCard songId="song-1" />);
+    expect(mockedTiming).toHaveBeenCalledWith('song-1');
+    expect(summaryText()).toBe(
+      '71 BPMcounted at 143 BPM in the recording · E minor · 4/4 · 1 part'
+    );
+    expect(screen.getByText('8 bars · 71 BPM · loop of 4 bars × 2 · sung')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Analysed recording (Nov 10, 2026)' })).toBeVisible();
+  });
+
+  it('marks a tempo that disagrees with the song for a check', async () => {
+    mockedGet.mockResolvedValue({ ...VIEW, bpm: 157.9 });
+    mockedTiming.mockResolvedValue(
+      resolveSongTiming(
+        { tempo: 120, durationMs: null },
+        { bpm: 157.9, feltBpm: null, durationSeconds: 200, analysedOn: '2026-11-10' }
+      )
+    );
+    await renderServerTree(<SongMapCard songId="song-1" />);
+    expect(screen.getByText('check')).toHaveAttribute(
+      'title',
+      'The recording plays at 158 BPM, the song says 120 BPM. Check the tempo.'
+    );
   });
 
   it('renders nothing without segments', async () => {
