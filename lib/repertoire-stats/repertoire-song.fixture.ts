@@ -32,7 +32,8 @@ export const analysisRow = (overrides: Partial<AnalysisStatsRow> = {}): Analysis
   chords: ['F#m', 'A', 'E', 'B'],
   key_strength: 0.9,
   capo_fret: 2,
-  progressions: [{ roman: ['i', 'III', 'VII', 'IV'], chords: ['F#m', 'A', 'E', 'B'], bars: 16 }],
+  // As song2logic writes it: against the parallel major (the app shows i III VII IV).
+  progressions: [{ roman: ['i', 'bIII', 'bVII', 'IV'], chords: ['F#m', 'A', 'E', 'B'], bars: 16 }],
   ...overrides,
 });
 

@@ -6,6 +6,7 @@
 
 import * as z from 'zod';
 
+import { tonicNumeral } from '@/lib/music-theory/roman-numeral';
 import { TrackStatsSchema } from '@/schemas/SongTranscriptionSchema';
 
 export interface TrackSummary {
@@ -127,7 +128,10 @@ function measuredOf(analysis: AnalysisStatsRow): NonNullable<RepertoireSong['mea
     durationMatches: analysis.duration_matches,
     chords: analysis.chords ?? [],
     suggestedCapo: numberOrNull(analysis.capo_fret),
-    progressions: progressions.success ? progressions.data : [],
+    progressions: (progressions.data ?? []).map((progression) => ({
+      ...progression,
+      roman: progression.roman.map((n) => tonicNumeral(n, analysis.key?.endsWith('m') ?? false)),
+    })),
   };
 }
 
