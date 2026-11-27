@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
@@ -26,6 +27,16 @@ const exercise = (change: Partial<SongExercise> = {}): SongExercise => ({
   createdAt: '2026-11-26T10:00:00Z',
   ...change,
 });
+const listProps = (
+  exercises: SongExercise[],
+  change: Partial<ComponentProps<typeof ExerciseList>> = {}
+): ComponentProps<typeof ExerciseList> => ({
+  exercises,
+  total: exercises.length,
+  params: { page: 1 },
+  songs: [{ id: SONG, title: 'Come Together' }],
+  ...change,
+});
 
 describe('ExerciseList', () => {
   beforeEach(() => {
@@ -34,7 +45,7 @@ describe('ExerciseList', () => {
   });
 
   it('explains how to add the first exercise when the library is empty', () => {
-    renderWithIntl(<ExerciseList exercises={[]} />);
+    renderWithIntl(<ExerciseList {...listProps([])} />);
     expect(screen.getByText('No exercises yet')).toBeInTheDocument();
     expect(screen.getByText(/press “Save as exercise”/)).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
@@ -42,7 +53,7 @@ describe('ExerciseList', () => {
 
   it('lists an exercise with its song, part, tempo, note and a link into the card on that part', () => {
     renderWithIntl(
-      <ExerciseList exercises={[exercise(), exercise({ id: 'e2', name: 'Chords' })]} />
+      <ExerciseList {...listProps([exercise(), exercise({ id: 'e2', name: 'Chords' })])} />
     );
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     const first = screen.getAllByRole('listitem')[0];
@@ -60,7 +71,7 @@ describe('ExerciseList', () => {
 
   it('deletes after a second click and refreshes the list', async () => {
     jest.mocked(deleteSongExercise).mockResolvedValue({ deleted: true });
-    renderWithIntl(<ExerciseList exercises={[exercise()]} />);
+    renderWithIntl(<ExerciseList {...listProps([exercise()])} />);
     fireEvent.click(screen.getByRole('button', { name: 'Delete exercise Main riff' }));
     expect(deleteSongExercise).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Sure?' }));
@@ -70,7 +81,7 @@ describe('ExerciseList', () => {
 
   it('keeps the row and says so when the delete fails', async () => {
     jest.mocked(deleteSongExercise).mockResolvedValue({ error: 'failed' });
-    renderWithIntl(<ExerciseList exercises={[exercise()]} />);
+    renderWithIntl(<ExerciseList {...listProps([exercise()])} />);
     fireEvent.click(screen.getByRole('button', { name: 'Delete exercise Main riff' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sure?' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not delete.');

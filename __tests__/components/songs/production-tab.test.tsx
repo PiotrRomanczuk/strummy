@@ -24,6 +24,11 @@ jest.mock('@/components/songs/production/PostList', () => ({
   ),
 }));
 
+// The staff-only exercises card fetches its own rows (SongExercisesCard.test.tsx covers it).
+jest.mock('@/lib/services/song-exercises', () => ({
+  listExercisesOfSong: jest.fn().mockResolvedValue([]),
+}));
+
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({ push: jest.fn(), refresh: jest.fn() })),
   usePathname: jest.fn(() => '/dashboard/songs/song-abc'),

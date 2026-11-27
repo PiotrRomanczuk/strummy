@@ -1,5 +1,7 @@
 import * as z from 'zod';
 
+import { PracticeTempoPercentSchema } from './PracticeTempoSchema';
+
 /** A song exercise (`song_exercises`, #1146): one part of a song saved by the teacher under a name. */
 
 export const EXERCISE_KINDS = ['riff', 'chords', 'strum', 'other'] as const;
@@ -21,7 +23,7 @@ export const CreateSongExerciseSchema = z.object({
   partN: z.number().int().min(1).max(1000),
   name: z.string().trim().min(1).max(EXERCISE_NAME_MAX),
   kind: z.enum(EXERCISE_KINDS),
-  tempoPercent: z.number().int().min(40).max(100),
+  tempoPercent: PracticeTempoPercentSchema,
   source: z.enum(EXERCISE_SOURCES),
   note: z
     .string()

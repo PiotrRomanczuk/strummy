@@ -34,6 +34,11 @@ jest.mock('@/lib/services/song-transcription-queries', () => ({
   getSongTranscription: jest.fn().mockResolvedValue(null),
 }));
 
+// And the exercises card (SongExercisesCard.test.tsx).
+jest.mock('@/lib/services/song-exercises', () => ({
+  listExercisesOfSong: jest.fn().mockResolvedValue([]),
+}));
+
 // So does the song map card (SongMapCard.test.tsx).
 jest.mock('@/lib/services/song-segments-queries', () => ({
   getSongMap: jest.fn().mockResolvedValue(null),

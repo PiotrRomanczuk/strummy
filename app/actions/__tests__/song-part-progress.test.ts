@@ -26,8 +26,8 @@ beforeEach(() => {
 
 describe('markSongPartTempo', () => {
   it.each([
-    ['a tempo of 0', { ...valid, tempoPercent: 0 }],
-    ['a tempo above 200', { ...valid, tempoPercent: 201 }],
+    ['a tempo below 40', { ...valid, tempoPercent: 39 }],
+    ['a tempo above 100', { ...valid, tempoPercent: 101 }],
     ['a fractional tempo', { ...valid, tempoPercent: 99.5 }],
     ['an empty label', { ...valid, partLabel: '' }],
     ['a label over 16 characters', { ...valid, partLabel: 'x'.repeat(17) }],
