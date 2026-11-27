@@ -125,7 +125,6 @@ C2 lib/calendar
 C2 lib/config
 C2 lib/demo
 C2 lib/lessons
-C2 lib/roles
 C22 components/auth/AuthLayout.tsx
 C22 components/auth/ForgotPasswordForm.Sent.tsx
 C22 components/auth/ResetPasswordForm.LinkError.tsx

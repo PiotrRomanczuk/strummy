@@ -160,8 +160,9 @@ PR into `dev` merges after green CI and the `pr-review` verdict
 ## Code Conventions
 
 > Canonical conventions auto-load from `.claude/rules/code-style.md` — component
-> organization (`Parent.Section.tsx`), naming, size limits (components <200 LOC,
-> hooks <150, function bodies <50), shadcn/ui usage, form validation, and
+> organization (`Parent.Section.tsx`), naming, size limits (`.tsx` files ≤200
+> lines, every other file incl. hooks ≤150, function bodies ≤50 — held in CI by
+> `npm run check:lint-baseline`), shadcn/ui usage, form validation, and
 > mobile-first styling with `dark:` variants. Not repeated here.
 
 ### File naming under `components/` — ALWAYS follow this
@@ -229,11 +230,11 @@ Tests are colocated beside their subject (`X.test.tsx`, `X.unit.test.ts`); the f
 one-branch model of 2026-10-11,
 `docs/analysis/2026-10-11-development-process-audit.md`):
 
-| Branch pushed              | Vercel target  | Serves                                  |
-| -------------------------- | -------------- | --------------------------------------- |
-| `main`                     | **production** | `strummy.online` + `strummy.vercel.app` |
-| `test`                     | preview        | a preview URL per push                  |
-| `dev`, any other branch    | — (no build)   | check locally (`npm run dev`) and in CI |
+| Branch pushed           | Vercel target  | Serves                                  |
+| ----------------------- | -------------- | --------------------------------------- |
+| `main`                  | **production** | `strummy.online` + `strummy.vercel.app` |
+| `test`                  | preview        | a preview URL per push                  |
+| `dev`, any other branch | — (no build)   | check locally (`npm run dev`) and in CI |
 
 _Since 2026-11-22 `vercel.json` (`git.deploymentEnabled` + `ignoreCommand`)
 builds `main` and `test` only. Hobby allows 100 deployments a day: on

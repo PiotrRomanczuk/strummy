@@ -61,12 +61,30 @@ several modules in one directory takes the directory's subject
 - **Hooks**: `use` prefix (`useStudentLesson`)
 - **Sub-components**: `Parent.Section.tsx` (`StudentLesson.Song.tsx`)
 
-## Size Limits (Enforced)
+## Size Limits (Enforced — by the lint ratchet)
 
-- Component file: Max 200 LOC
-- Hook file: Max 150 LOC
-- Any other file: Max 150 LOC, single responsibility (`AGENTS.md`)
-- Function body: Max 50 LOC
+One set of numbers, the same here, in `AGENTS.md` and in `eslint.config.mjs`
+(#1218, 2026-11-27):
+
+- `.tsx` file (components, pages, layouts): max **200** lines
+- Any other file (hooks, `lib/`, route handlers, every `.ts`): max **150** lines, single responsibility
+- Function body: max **50** lines
+
+Lines are counted without blanks or comments, in `app/`, `components/`, `lib/`
+and `hooks/`; tests, `types/` and migrations are exempt. ESLint reports them as
+warnings (`max-lines`, `max-lines-per-function`), and warnings cannot grow:
+`npm run check:lint-baseline` (in CI) fails when any rule has more warnings
+than `scripts/ci/.lint-baseline.json`. So a **new** file or function over the
+limit fails CI; the existing ones sit in the baseline until they are split
+(#1066). Fixed some warnings? Lock the gain in with
+`npm run check:lint-baseline -- --update-baseline` — it only ever lowers
+counts. Raising one is a hand edit of the JSON that a reviewer has to accept.
+
+Why these numbers and not ESLint's old 200/80: they were already the documented
+rule every agent reads, and they match the workspace standard (files < 150,
+components < 200, functions < 50). Loosening the docs to fit the linter would
+have accepted the drift; tightening the linter makes the rule true, and the
+ratchet keeps the jump in warnings (351 → 813) from turning into wallpaper.
 
 ## UI Components
 
