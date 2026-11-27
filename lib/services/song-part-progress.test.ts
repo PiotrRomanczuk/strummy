@@ -4,7 +4,11 @@
 
 import { createClient } from '@/lib/supabase/server';
 
-import { getSongPartProgress, partLabelsFromParts } from './song-part-progress';
+import {
+  getSongPartProgress,
+  getSongProgressMarks,
+  partLabelsFromParts,
+} from './song-part-progress';
 
 jest.mock('@/lib/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn() } }));
 jest.mock('@/lib/supabase/server', () => ({ createClient: jest.fn() }));
@@ -85,5 +89,23 @@ describe('getSongPartProgress', () => {
       status: 'not_started',
       parts: [],
     });
+  });
+});
+
+describe('getSongProgressMarks', () => {
+  it('maps every stored row, whole-song marks included', async () => {
+    (createClient as jest.Mock).mockResolvedValue(
+      clientWith({ student_song_progress: { data: [ROW(null, 90, 1)], error: null } })
+    );
+    expect(await getSongProgressMarks('student-1', 'song-1')).toEqual([
+      { partLabel: null, tempoPercent: 90, markedAt: '2026-11-01T10:00:00Z' },
+    ]);
+  });
+
+  it('is empty when the marks cannot be read', async () => {
+    (createClient as jest.Mock).mockResolvedValue(
+      clientWith({ student_song_progress: { data: null, error: { message: 'boom' } } })
+    );
+    expect(await getSongProgressMarks('student-1', 'song-1')).toEqual([]);
   });
 });

@@ -3774,6 +3774,27 @@
       "backing": "backing track"
     }
   },
+  "SongProgress": {
+    "eyebrow": "Student progress",
+    "hintParts": "Tap the tempo at which the student plays the part with the recording. Every tap adds an entry to the history.",
+    "hintWhole": "This song is not split into parts, so you mark it as a whole.",
+    "student": "Student",
+    "pickStudent": "Pick a student…",
+    "noStudent": "Pick a student to see and mark their progress.",
+    "statusLabel": "Song status:",
+    "status": {
+      "not_started": "not started",
+      "started": "started",
+      "mastered": "mastered"
+    },
+    "wholeSong": "Whole song",
+    "latest": "{tempo}% · {date}",
+    "notMarked": "not marked yet",
+    "tempoFor": "Tempo: {part}",
+    "markAt": "{part}: plays at {tempo}% tempo",
+    "saving": "Saving…",
+    "failed": "Could not save. Try again."
+  },
   "SongCard": {
     "backToSong": "← Back to the song",
     "source": "Recording analysis · {date}",

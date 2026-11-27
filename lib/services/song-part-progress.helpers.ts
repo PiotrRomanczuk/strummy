@@ -31,7 +31,8 @@ function isNewer(a: SongProgressMark, b: SongProgressMark): boolean {
   return new Date(a.markedAt).getTime() > new Date(b.markedAt).getTime();
 }
 
-function latestByLabel(marks: SongProgressMark[]): Map<string | null, SongProgressMark> {
+/** The newest mark per part label (null = the whole song). */
+export function latestByLabel(marks: SongProgressMark[]): Map<string | null, SongProgressMark> {
   const latest = new Map<string | null, SongProgressMark>();
   for (const mark of marks) {
     const current = latest.get(mark.partLabel);

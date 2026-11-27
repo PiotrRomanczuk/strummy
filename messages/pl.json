@@ -3774,6 +3774,27 @@
       "backing": "podkład"
     }
   },
+  "SongProgress": {
+    "eyebrow": "Postęp ucznia",
+    "hintParts": "Dotknij tempa, w którym uczeń gra część z nagraniem. Każde dotknięcie to nowy wpis w historii.",
+    "hintWhole": "Utwór nie ma podziału na części, więc zaznaczasz go w całości.",
+    "student": "Uczeń",
+    "pickStudent": "Wybierz ucznia…",
+    "noStudent": "Wybierz ucznia, żeby zobaczyć i zaznaczyć jego postęp.",
+    "statusLabel": "Status utworu:",
+    "status": {
+      "not_started": "nie zaczęty",
+      "started": "zaczęty",
+      "mastered": "opanowany"
+    },
+    "wholeSong": "Cały utwór",
+    "latest": "{tempo}% · {date}",
+    "notMarked": "jeszcze nie zaznaczono",
+    "tempoFor": "Tempo: {part}",
+    "markAt": "{part}: gra w {tempo}% tempa",
+    "saving": "Zapisuję…",
+    "failed": "Nie udało się zapisać. Spróbuj jeszcze raz."
+  },
   "SongCard": {
     "backToSong": "← Wróć do piosenki",
     "source": "Analiza nagrania · {date}",

@@ -9,6 +9,8 @@ import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { getSongCard } from '@/lib/services/song-card-queries';
 import { getSongCardReview } from '@/lib/services/song-card-review';
 import { getSongCardForStudent } from '@/lib/services/song-card-student';
+import { getSongCardProgress } from '@/lib/services/song-card-progress';
+import { SongCardProgress } from '@/components/songs/song-card/SongCardProgress';
 import { SongCardEmpty } from '@/components/songs/song-card/SongCardEmpty';
 import { SongCardHeader } from '@/components/songs/song-card/SongCardHeader';
 import { SongCardView } from '@/components/songs/song-card/SongCardView';
@@ -57,10 +59,16 @@ type PageProps = {
 /** The song card (SNG-17): the song to play along with, drawn from the analysis of its recording. */
 export default async function SongCardPage({ params, searchParams }: PageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const [song, { isAdmin, isTeacher }] = await Promise.all([loadSong(id), getUserWithRolesSSR()]);
+  const [song, { isAdmin, isTeacher, profileId }] = await Promise.all([
+    loadSong(id),
+    getUserWithRolesSSR(),
+  ]);
   if (!song) notFound();
   const isStaff = isAdmin || isTeacher;
-  const loaded = await loadCard(id, isStaff);
+  const [loaded, progress] = await Promise.all([
+    loadCard(id, isStaff),
+    isStaff && profileId ? getSongCardProgress(id, { profileId, isAdmin }, query) : null,
+  ]);
 
   return (
     <div
@@ -86,6 +94,16 @@ export default async function SongCardPage({ params, searchParams }: PageProps) 
           />
         ) : (
           <SongCardEmpty songId={id} isTeacher={isStaff} />
+        )}
+        {progress && (
+          <SongCardProgress
+            songId={id}
+            parts={loaded?.card.parts ?? []}
+            students={progress.students}
+            studentId={progress.studentId}
+            lessonId={progress.lessonId}
+            initialMarks={progress.marks}
+          />
         )}
       </div>
     </div>
