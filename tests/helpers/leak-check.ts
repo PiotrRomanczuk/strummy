@@ -12,9 +12,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * anything a spec named differently stayed. By 2026-11-27 the dev stack held
  * 406 sign-in accounts without a profile, 343 API keys and 1 101 leads.
  *
- * The dev stack is shared, so a concurrent run (another PR's CI, the RLS job)
- * shows up here too. That is why the check fails the run only when
- * E2E_LEAK_CHECK=strict (the nightly, which runs alone) and reports otherwise.
+ * The dev stack is shared, so a concurrent run shows up here too. Every CI job
+ * that writes to it runs on one self-hosted runner, one at a time, which is why
+ * E2E_LEAK_CHECK=strict (Core flows, the full E2E job, the nightly) can fail the
+ * run on a leftover. A local run only reports; one started during a CI run
+ * would show up in that run's list.
  */
 
 /** Written by triggers and the app as a side effect; trimmed by age, not per spec. */
