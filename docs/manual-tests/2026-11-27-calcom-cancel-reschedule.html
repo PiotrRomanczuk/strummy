@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cal.com cancel and reschedule</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; color: #1f2328; background: #fff; }
+  h1 { font-size: 1.6rem; } h2 { margin-top: 2rem; border-bottom: 1px solid #d0d7de; padding-bottom: .3rem; }
+  code, pre { background: #f6f8fa; border-radius: 4px; font-size: .9em; }
+  code { padding: .1em .3em; } pre { padding: .8rem; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d0d7de; padding: .4rem .6rem; text-align: left; vertical-align: top; }
+  .meta { color: #59636e; }
+  @media (prefers-color-scheme: dark) { body { background: #0d1117; color: #e6edf3; } code, pre { background: #161b22; } td, th, h2 { border-color: #30363d; } }
+</style>
+</head>
+<body>
+<h1>Cal.com webhook: cancel and reschedule</h1>
+<p class="meta"><strong>Date</strong>: 2026-11-27 · <strong>Issue</strong>: #1080 · <strong>Branch</strong>: <code>fix/calcom-cancel-reschedule</code></p>
+
+<h2>What changed</h2>
+<p>Before: the webhook only acted on <code>BOOKING_CREATED</code>. A cancelled booking left its lesson <code>SCHEDULED</code>; a rescheduled booking left the lesson at the old time (and its new uid was unknown). A booking without <code>endTime</code> got 45 minutes, and the lesson went to whichever teacher/admin row the database returned first.</p>
+<table>
+<tr><th>Event</th><th>Now</th></tr>
+<tr><td><code>BOOKING_CREATED</code></td><td>Unchanged flow (student found or created, lesson created once per uid), but the teacher is <code>CALCOM_TEACHER_PROFILE_ID</code> and the default length is 60 min.</td></tr>
+<tr><td><code>BOOKING_CANCELLED</code></td><td>The <code>SCHEDULED</code> lesson with <code>calcom_booking_id = uid</code> becomes <code>CANCELLED</code>. Repeat / unknown uid / completed lesson: nothing changes (<code>action: "unchanged"</code>).</td></tr>
+<tr><td><code>BOOKING_RESCHEDULED</code></td><td>Cal.com sends a new <code>uid</code> plus <code>rescheduleUid</code> (the old booking). The old booking's scheduled lesson moves to the new <code>startTime</code>, its length follows <code>endTime</code> (else 60), and its <code>calcom_booking_id</code> becomes the new uid. Repeat event: the new uid already has the lesson, nothing new is created (the old one is cancelled if still scheduled). Neither uid known: handled as a new booking.</td></tr>
+<tr><td>other events</td><td>200 <code>{ "ignored": "&lt;event&gt;" }</code>, nothing touched.</td></tr>
+</table>
+<p>Signature verification is unchanged and still fail-closed. No migration: <code>lessons.calcom_booking_id</code> already has a unique partial index (<code>20260803090000</code>).</p>
+
+<h2>Configuration</h2>
+<p>New env var <code>CALCOM_TEACHER_PROFILE_ID</code> = the profile id (uuid) of the teacher who gets Cal.com lessons, set per environment on Vercel (Production and Preview). It must have the <code>teacher</code> or <code>admin</code> role. If it is missing or wrong, bookings answer 500 and Cal.com retries them, rather than landing on a guessed teacher. Documented in <code>lib/env.ts</code>.</p>
+
+<h2>How to test manually (dev stack)</h2>
+<ol>
+<li>In <code>.env.local</code> set <code>CALCOM_WEBHOOK_SECRET</code> to any test value and <code>CALCOM_TEACHER_PROFILE_ID</code> to the dev teacher's profile id. Run <code>npm run dev</code>.</li>
+<li>Write a body, e.g. <code>created.json</code>:
+<pre>{"triggerEvent":"BOOKING_CREATED","payload":{"uid":"mt-1","startTime":"2026-12-01T16:00:00Z","attendees":[{"name":"Manual Test","email":"manual-test-1080@example.com"}]}}</pre>
+Sign and send:
+<pre>SIG=$(openssl dgst -sha256 -hmac "$CALCOM_WEBHOOK_SECRET" -hex &lt; created.json | awk '{print $2}')
+curl -s -X POST localhost:3000/api/webhooks/calcom -H "x-cal-signature-256: $SIG" --data-binary @created.json</pre>
+Expect <code>action: "created"</code>; in the dashboard the lesson is with the configured teacher, 60 min.</li>
+<li>Send the same body again: same <code>lessonId</code>, no second lesson.</li>
+<li>Reschedule: <code>{"triggerEvent":"BOOKING_RESCHEDULED","payload":{"uid":"mt-2","rescheduleUid":"mt-1","startTime":"2026-12-03T17:00:00Z","endTime":"2026-12-03T17:45:00Z","attendees":[...same...]}}</code>. Expect <code>action: "rescheduled"</code>, same lesson id, now 3 Dec 17:00, 45 min. Send again: <code>"unchanged"</code>, still one lesson.</li>
+<li>Cancel: <code>{"triggerEvent":"BOOKING_CANCELLED","payload":{"uid":"mt-2"}}</code>. Expect <code>action: "cancelled"</code> and the lesson shows as cancelled. Send again: <code>"unchanged"</code>.</li>
+<li>Edge cases: cancel without <code>uid</code> → 400 <code>Invalid booking uid</code>; reschedule without <code>rescheduleUid</code> → 400; unset <code>CALCOM_TEACHER_PROFILE_ID</code> and send a new booking → 500, no lesson; bad signature → 401.</li>
+<li>Clean up: delete the lesson and the shadow profile created for <code>manual-test-1080@example.com</code>.</li>
+</ol>
+
+<h2>Automated coverage</h2>
+<ul>
+<li><code>lib/services/calcom-booking-changes.unit.test.ts</code>: cancel (cancels, idempotent, error), reschedule (moves, 60-min default, idempotent repeat, unknown uid creates).</li>
+<li><code>lib/services/__tests__/calcom.unit.test.ts</code>: teacher from config (missing / invalid / not a teacher).</li>
+<li><code>app/api/webhooks/calcom/route.test.ts</code>: dispatch per event, 400s, configured teacher + 60 min on create, 500 without config.</li>
+</ul>
+<p>No browser was used: backend-only change, so no screenshots.</p>
+</body>
+</html>

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createLogger } from '@/lib/logger';
 import { parseCalcomEmail } from '@/schemas/CalcomWebhookSchema';
 import { extractIntakeAnswers, resolveStudentId } from './calcom-intake.helpers';
+import { resolveCalcomTeacherId } from './calcom-teacher';
 
 const log = createLogger('calcom');
 
@@ -20,6 +21,8 @@ export interface CalcomBookingResponse {
 export interface CalcomBookingPayload {
   triggerEvent: string;
   uid?: string;
+  /** BOOKING_RESCHEDULED only: the uid of the booking this one replaces. */
+  rescheduleUid?: string;
   startTime: string;
   endTime?: string;
   title?: string;
@@ -52,10 +55,14 @@ export function verifyCalcomSignature(
   return crypto.timingSafeEqual(received, expected);
 }
 
-function durationMinutes(startTime: string, endTime?: string): number {
-  if (!endTime) return 45;
+/** The booking page sells 60-minute lessons; used when Cal.com sends no `endTime`. */
+export const CALCOM_DEFAULT_DURATION_MINUTES = 60;
+
+export function calcomDurationMinutes(startTime: string, endTime?: string): number {
+  if (!endTime) return CALCOM_DEFAULT_DURATION_MINUTES;
   const ms = new Date(endTime).getTime() - new Date(startTime).getTime();
-  return Math.max(1, Math.round(ms / 60_000));
+  if (!Number.isFinite(ms) || ms <= 0) return CALCOM_DEFAULT_DURATION_MINUTES;
+  return Math.round(ms / 60_000);
 }
 
 async function resolveLessonId(
@@ -78,7 +85,7 @@ async function resolveLessonId(
       teacher_id: teacherId,
       student_id: studentId,
       scheduled_at: payload.startTime,
-      duration_minutes: durationMinutes(payload.startTime, payload.endTime),
+      duration_minutes: calcomDurationMinutes(payload.startTime, payload.endTime),
       calcom_booking_id: payload.uid,
       status: 'SCHEDULED',
     })
@@ -104,19 +111,9 @@ export async function processCalcomBookingPayload(
   const admin = createAdminClient();
   const intake = extractIntakeAnswers(payload.responses);
 
-  const { data: teacherRole } = await admin
-    .from('user_roles')
-    .select('user_id:profile_id')
-    .in('role', ['teacher', 'admin'])
-    .limit(1)
-    .maybeSingle();
-
-  if (!teacherRole) {
-    throw new Error('Cal.com webhook: no teacher profile found to assign the lesson to');
-  }
-
+  const teacherId = await resolveCalcomTeacherId(admin);
   const studentId = await resolveStudentId(admin, attendee, email, intake);
-  const lessonId = await resolveLessonId(admin, teacherRole.user_id, studentId, payload);
+  const lessonId = await resolveLessonId(admin, teacherId, studentId, payload);
 
   return { success: true, action: 'created', lessonId, studentId };
 }

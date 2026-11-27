@@ -146,18 +146,18 @@ describe('Cal.com Webhook Handler', () => {
     expect(processCalcomBookingPayload).not.toHaveBeenCalled();
   });
 
-  it('ignores events other than BOOKING_CREATED with 200', async () => {
+  it('ignores events other than the three booking events with 200', async () => {
     (verifyCalcomSignature as jest.Mock).mockReturnValue(true);
 
     const req = new NextRequest('http://localhost/api/webhooks/calcom', {
       method: 'POST',
       headers: { 'x-cal-signature-256': 'valid_sig' },
-      body: JSON.stringify({ triggerEvent: 'BOOKING_CANCELLED', payload: { uid: 'x' } }),
+      body: JSON.stringify({ triggerEvent: 'MEETING_ENDED', payload: { uid: 'x' } }),
     });
 
     const res = await POST(req);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ignored: 'BOOKING_CANCELLED' });
+    expect(await res.json()).toEqual({ ignored: 'MEETING_ENDED' });
     expect(processCalcomBookingPayload).not.toHaveBeenCalled();
   });
 });

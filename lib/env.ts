@@ -26,6 +26,10 @@ const requiredForProduction = ['CRON_SECRET'] as const;
 //   (app/api/webhooks/calcom). Required for bookings to arrive: without it the
 //   route answers 500 and processes nothing (fail closed). Set it in Production
 //   and Preview on Vercel to the secret configured on the Cal.com webhook.
+// CALCOM_TEACHER_PROFILE_ID: the profile id (uuid, a teacher or admin) every
+//   Cal.com booking becomes a lesson with. Not a secret, but it differs per
+//   database, so it lives in Vercel env, not here. Without it (or when it does
+//   not name a teacher/admin) bookings answer 500 and Cal.com retries them.
 
 /**
  * Validate that required environment variables are set.
