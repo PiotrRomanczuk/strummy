@@ -1,6 +1,6 @@
 /**
  * RLS acceptance tests for teacher_update_student (#1178, migration
- * 20261127120000): a teacher edits and archives the students they teach, and
+ * 20261127130000): a teacher edits and archives the students they teach, and
  * nothing else — no other teacher's student, no staff profile, no role flag.
  */
 

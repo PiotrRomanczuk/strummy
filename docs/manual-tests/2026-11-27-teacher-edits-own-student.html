@@ -23,7 +23,7 @@
 <h2>What changed</h2>
 <ul>
   <li><strong>Database</strong> — new SECURITY DEFINER function <code>teacher_update_student(p_student_id, p_changes)</code>
-    (migration <code>20261127120000_teacher_update_own_student.sql</code>). An admin, or a teacher who shares a non-deleted
+    (migration <code>20261127130000_teacher_update_own_student.sql</code>). An admin, or a teacher who shares a non-deleted
     lesson with the student, may change the student-card columns (name, phone, level, instrument, start date, colour,
     parent name/e-mail, schedule, rate, billing cycle, notes) and <code>student_status</code> (archive / restore).
     Any other key — <code>is_admin</code>, <code>is_teacher</code>, <code>is_active</code>, <code>email</code>,
