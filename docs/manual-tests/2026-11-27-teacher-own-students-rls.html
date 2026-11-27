@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Teachers see only their own students' side data (2026-11-27)</title>
+    <style>
+      body {
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 16px;
+        color: #1c1917;
+      }
+      h1 {
+        font-size: 26px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 32px;
+      }
+      code,
+      pre {
+        font:
+          13px/1.5 ui-monospace,
+          monospace;
+        background: #f5f1ea;
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 12px;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td,
+      th {
+        border: 1px solid #e0d9cc;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f5f1ea;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Teachers see only their own students' quiz, skills and song-request data</h1>
+    <p>
+      <strong>Date</strong>: 2026-11-27 · <strong>Scope</strong>: one migration
+      (<code>20261127140000_teacher_own_students_side_tables.sql</code>) and one RLS suite. No
+      application code changed.
+    </p>
+
+    <h2>What was done</h2>
+    <p>
+      The staff policies on five per-student tables let every teacher reach every student's rows.
+      They now let a teacher reach a row only when they teach that student (a non-deleted lesson
+      together, <code>teacher_teaches_student()</code> — the same "Teaches" rule as the
+      <code>teacher_students</code> view and the first half of <code>may_teach_student()</code>).
+      Admins keep full access, students keep their own rows. None of the tables has a parent policy.
+    </p>
+    <table>
+      <tr>
+        <th>Table</th>
+        <th>Teacher could before</th>
+        <th>Teacher can now</th>
+      </tr>
+      <tr>
+        <td><code>chord_quiz_attempts</code></td>
+        <td>read all</td>
+        <td>read own students'</td>
+      </tr>
+      <tr>
+        <td><code>chord_srs</code></td>
+        <td>read all</td>
+        <td>read own students'</td>
+      </tr>
+      <tr>
+        <td><code>student_skills</code></td>
+        <td>read + insert/update/delete all</td>
+        <td>same, own students only</td>
+      </tr>
+      <tr>
+        <td><code>song_requests</code></td>
+        <td>read + update (review) all</td>
+        <td>same, own students only</td>
+      </tr>
+      <tr>
+        <td><code>song_status_history</code></td>
+        <td>read all</td>
+        <td>read own students'</td>
+      </tr>
+    </table>
+    <p>The skills catalog (<code>skills</code>) is shared and unchanged.</p>
+
+    <h2>What changes on screen</h2>
+    <ul>
+      <li>
+        <strong>Song requests</strong> (<code>/dashboard/songs/requests</code>): a teacher's list
+        shows only requests from students they teach. A request from a student with no lessons yet
+        is visible to the admin only. Reviewing a request of someone else's student now changes
+        nothing (the update matches no row).
+      </li>
+      <li>
+        Student detail pages (skills checklist, chord-quiz stats, song status history) look the same
+        for the teacher's own students. Opening another teacher's student shows empty sections for
+        these tables.
+      </li>
+      <li>Admin and student views: no change.</li>
+    </ul>
+
+    <h2>How to test manually (dev stack)</h2>
+    <ol>
+      <li>
+        Apply the migration to <code>StrummyDevelopment</code> (already applied on 2026-11-27):
+        <pre>
+cat supabase/migrations/20261127140000_teacher_own_students_side_tables.sql | ssh elite 'docker exec -i supabase_db_StrummyDevelopment psql -v ON_ERROR_STOP=1 -U postgres -d postgres'</pre>
+      </li>
+      <li>
+        <code>npm run dev</code>, sign in as the dev teacher, open
+        <code>/dashboard/songs/requests</code>. Expected: only requests of students who have a
+        lesson with this teacher (on dev today: none — the two seeded requests belong to demo
+        students taught by someone else).
+      </li>
+      <li>Sign in as the dev admin, same page. Expected: every pending request.</li>
+      <li>
+        As the dev teacher open the dev student's profile → Skills. Expected: the checklist loads
+        and a status change saves (the teacher teaches that student).
+      </li>
+    </ol>
+
+    <h2>Automated checks</h2>
+    <ul>
+      <li>
+        <code>lib/testing/rls/__tests__/teacher-own-students-side-tables.rls.test.ts</code> against
+        dev (:55321): 18/18 pass, leak check clean. Per table: teacher A sees own student's row and
+        not teacher B's; cannot update or delete B's row; admin sees both; students see their own.
+        Plus: teacher A updates own student's skill and request, cannot insert a skill for B's
+        student.
+      </li>
+      <li><code>migrate-db.sh classify</code>: <code>additive</code>.</li>
+      <li>
+        lint (0 errors), typecheck, <code>npm test</code> (507 suites), check:structure: pass.
+      </li>
+    </ul>
+  </body>
+</html>
