@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Part progress on the song card - manual test report</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; max-width: 980px; margin: 2rem auto; padding: 0 1rem; color: #1c1917; }
+      h1 { font-size: 1.6rem; }
+      h2 { margin-top: 2.2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+      code { background: #f3efe6; padding: 1px 5px; border-radius: 4px; }
+      pre { background: #f3efe6; padding: 0.7rem 1rem; border-radius: 6px; overflow-x: auto; }
+      table { border-collapse: collapse; }
+      td, th { border: 1px solid #ddd; padding: 4px 8px; text-align: left; vertical-align: top; }
+    </style>
+  </head>
+  <body>
+    <h1>Part progress on the song card</h1>
+    <p>
+      <b>Date</b>: 2026-11-27 &middot; <b>Branch</b>: <code>feature/part-progress-button</code>
+      &middot; <b>Issue</b>: #1136 (UI half; data layer merged in #1204) &middot; <b>Screenshots</b>:
+      none, the app was not run in this session; the steps below are for a check on dev.
+    </p>
+
+    <h2>What was done</h2>
+    <table>
+      <tr><th>Part</th><th>Change</th></tr>
+      <tr>
+        <td>Panel <code>components/songs/song-card/SongCardProgress*.tsx</code></td>
+        <td>
+          New section "Postęp ucznia" at the bottom of the song card
+          (<code>/dashboard/songs/&lt;id&gt;/card</code>), staff only. The teacher picks a student
+          (kept in the address as <code>?student=</code>); each part letter of the song gets a row
+          with its latest tempo and date and tempo buttons 50 / 60 / 75 / 90 / 100%. One tap saves a
+          mark through the existing action <code>markSongPartTempo</code>; the row and the song
+          status (not started / started / mastered) update at once. A song without parts shows a
+          single "Cały utwór" row. Buttons are 44&nbsp;px high for a tablet.
+        </td>
+      </tr>
+      <tr>
+        <td>Lesson link (for #1138)</td>
+        <td>
+          <code>?lesson=&lt;uuid&gt;</code> next to <code>?student=</code> stores the lesson with
+          each mark. Picking another student drops it.
+        </td>
+      </tr>
+      <tr>
+        <td>Loader <code>lib/services/song-card-progress.ts</code></td>
+        <td>
+          The teacher's roster (<code>getStudentOptions</code>), the student from the address only
+          when they are in it, and their raw marks (<code>getSongProgressMarks</code>, split out of
+          <code>getSongPartProgress</code>). Status is derived on the client with the same rule
+          (<code>deriveSongProgress</code>).
+        </td>
+      </tr>
+      <tr><td>i18n</td><td>New namespace <code>SongProgress</code> in <code>pl.json</code> and <code>en.json</code>.</td></tr>
+    </table>
+
+    <h2>How to test on dev</h2>
+    <ol>
+      <li><code>npm run dev</code> against <code>StrummyDevelopment</code>; sign in as the dev teacher.</li>
+      <li>Open a song that has an analysis (song page &rarr; "Karta utworu"). At the bottom: "Postęp ucznia" asks for a student.</li>
+      <li>Pick a student. The address gets <code>?student=…</code>; status "nie zaczęty", every row "jeszcze nie zaznaczono".</li>
+      <li>Tap 75% on the verse row: the row shows "75% · 27 lis", the 75% button is highlighted, status "zaczęty".</li>
+      <li>Tap 100% on every row: status "opanowany". Reload: the same state comes back from the database.</li>
+      <li>Tap 60% on one row: status goes back to "zaczęty" (latest mark wins; history keeps all rows).</li>
+      <li>Open a song without an analysis: the card says there is no analysis, and the panel shows one row "Cały utwór".</li>
+      <li>Add <code>&amp;lesson=&lt;id of a lesson of that student&gt;</code>, tap a tempo, and check <code>student_song_progress.lesson_id</code> on dev.</li>
+      <li>Sign in as the student and open the same card: the panel is not shown.</li>
+      <li>Tablet width (768&nbsp;px) and phone width: the buttons wrap, nothing scrolls sideways; dark mode uses the card tokens.</li>
+    </ol>
+
+    <h2>Automated</h2>
+    <pre>npx jest components/songs/song-card/SongCardProgress lib/services/song-card-progress lib/services/song-part-progress</pre>
+    <ul>
+      <li>No student: prompt, no status. Picking one writes <code>?student=</code> and drops <code>lesson</code>.</li>
+      <li>One row per part letter (repeats share it), latest tempo shown and pressed, derived status.</li>
+      <li>A tap sends student, song, part, tempo and lesson; the last part at 100% makes the song mastered.</li>
+      <li>Song without parts: whole-song row, <code>partLabel: null</code>, no <code>lessonId</code> when there is none.</li>
+      <li>Failed save: an alert on the row, history unchanged.</li>
+      <li>Loader: a student outside the roster and a non-uuid lesson are ignored.</li>
+    </ul>
+    <p>Gates: <code>npm run lint</code> (0 errors), <code>npm run typecheck</code>, <code>npm test</code> (509 suites passed), <code>npm run check:structure</code> (clean).</p>
+  </body>
+</html>
