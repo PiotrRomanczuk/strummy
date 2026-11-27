@@ -86,6 +86,12 @@ describeIfRls('assignment status action on the real database', () => {
   describe('the owning student', () => {
     beforeAll(() => actAs(fx.studentA1));
 
+    // #1079: the cases below only prove the profile-id guard if the student's
+    // profiles.id differs from the auth id, as it does for an invited student.
+    it('is a student whose profile id differs from the auth id', () => {
+      expect(fx.studentA1.id).not.toBe(fx.studentA1.userId);
+    });
+
     it('starts the assignment, and the teacher is not told', async () => {
       const id = await assignment();
       await expect(updateAssignmentStatusAction(id, 'in_progress')).resolves.toEqual({

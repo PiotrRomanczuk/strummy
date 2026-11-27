@@ -344,4 +344,49 @@ describe('notification-preferences actions', () => {
       expect(mockUpdate2).toHaveBeenCalledWith({ enabled: false });
     });
   });
+
+  // #1079: an invited student's profiles.id differs from their auth id. The
+  // guard must compare profile ids — the auth id is not a key of this table.
+  describe('invited student (profile id ≠ auth id)', () => {
+    it('reads and writes their own preferences by profile id', async () => {
+      mockRolesUser('student-profile');
+      const { mockEq } = mockPreferencesQuery(mockPreferences);
+      await expect(getUserNotificationPreferences('student-profile')).resolves.toEqual({
+        success: true,
+        data: mockPreferences,
+      });
+      expect(mockEq).toHaveBeenCalledWith('profile_id', 'student-profile');
+
+      mockRolesUser('student-profile');
+      const { mockEq1 } = mockUpdateQuery();
+      await expect(
+        updateNotificationPreference('student-profile', 'lesson_reminder_24h', false)
+      ).resolves.toEqual({ success: true });
+      expect(mockEq1).toHaveBeenCalledWith('profile_id', 'student-profile');
+
+      mockRolesUser('student-profile');
+      const { mockEq: mockBulkEq } = mockBulkUpdateQuery();
+      await expect(updateAllNotificationPreferences('student-profile', true)).resolves.toEqual({
+        success: true,
+      });
+      expect(mockBulkEq).toHaveBeenCalledWith('profile_id', 'student-profile');
+    });
+
+    it('does not accept their auth id in place of the profile id', async () => {
+      const accountId = 'account-of-student';
+      mockRolesUser('student-profile');
+      await expect(getUserNotificationPreferences(accountId)).resolves.toMatchObject({
+        success: false,
+      });
+      mockRolesUser('student-profile');
+      await expect(
+        updateNotificationPreference(accountId, 'lesson_reminder_24h', false)
+      ).resolves.toMatchObject({ success: false });
+      mockRolesUser('student-profile');
+      await expect(updateAllNotificationPreferences(accountId, false)).resolves.toMatchObject({
+        success: false,
+      });
+      expect(mockSupabaseClient.from).not.toHaveBeenCalled();
+    });
+  });
 });
