@@ -172,6 +172,18 @@ describe('toggleChecklistItemAction', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  // #1079: ownership is a profile-id match. A row whose student_id happens to
+  // equal the caller's auth id belongs to someone else's profile.
+  it('does not treat a match on the auth id as ownership', async () => {
+    mockGetUserWithRolesSSR.mockResolvedValue(asStudent);
+    fetchRow({ student_id: asStudent.user.id });
+
+    const result = await toggleChecklistItemAction(ASSIGNMENT_ID, 'a', true);
+
+    expect(result).toEqual({ error: 'You cannot change this assignment' });
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
   it('rejects an unauthenticated user', async () => {
     mockGetUserWithRolesSSR.mockResolvedValue({
       user: null,
