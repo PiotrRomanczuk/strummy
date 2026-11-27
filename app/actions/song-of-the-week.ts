@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { cleanSearchTerm } from '@/lib/supabase/filter-pattern';
 import { getUserWithRolesSSR } from '@/lib/getUserWithRolesSSR';
 import { guardTestAccountMutation } from '@/lib/auth/test-account-guard';
 import { revalidatePath } from 'next/cache';
@@ -157,7 +158,7 @@ export async function searchSongsForSotw(
     .order('title', { ascending: true })
     .limit(20);
 
-  const safeQuery = query.trim().replace(/[,().%]/g, '');
+  const safeQuery = cleanSearchTerm(query);
   if (safeQuery) {
     songQuery = songQuery.or(`title.ilike.%${safeQuery}%,author.ilike.%${safeQuery}%`);
   }

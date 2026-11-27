@@ -3,23 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { PaginationSchema } from '@/schemas/CommonSchema';
 import { withApiAuth } from '@/lib/auth/withApiAuth';
 import { logger } from '@/lib/logger';
-
-/**
- * Sanitizes a search string for safe use in PostgREST filter expressions.
- *
- * PostgREST's `.or()` filter parses comma-separated clauses and uses `.` as a
- * field/operator separator. If user input contains these characters it can
- * alter the filter structure and leak or manipulate query results.
- *
- * We strip the characters that carry structural meaning inside a PostgREST
- * filter string: `,` `.` `:` `(` `)`.
- * The `%` wildcard is also removed because we add our own wildcards around the
- * sanitized value — keeping a user-supplied `%` would produce double wildcards
- * and is redundant.
- */
-export function sanitizePostgrestFilter(input: string): string {
-  return input.replace(/[,.:()%]/g, '');
-}
+import { cleanSearchTerm } from '@/lib/supabase/filter-pattern';
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async () => {
@@ -49,10 +33,10 @@ export async function GET(req: NextRequest) {
       // Build query
       let query = supabase.from('songs').select('*', { count: 'exact' });
 
-      // Apply search filter — sanitize input before interpolating into the
-      // PostgREST filter expression to prevent filter injection via special chars.
+      // Apply search filter — clean input before interpolating into the
+      // PostgREST filter expression so it cannot add conditions of its own.
       if (searchQuery) {
-        const safe = sanitizePostgrestFilter(searchQuery);
+        const safe = cleanSearchTerm(searchQuery);
         if (safe.length > 0) {
           query = query.or(`title.ilike.%${safe}%,author.ilike.%${safe}%,chords.ilike.%${safe}%`);
         }
@@ -62,7 +46,7 @@ export async function GET(req: NextRequest) {
       if (level) query = query.eq('level', level);
       if (key) query = query.eq('key', key);
       if (author) {
-        const safeAuthor = sanitizePostgrestFilter(author);
+        const safeAuthor = cleanSearchTerm(author);
         if (safeAuthor.length > 0) {
           query = query.ilike('author', `%${safeAuthor}%`);
         }

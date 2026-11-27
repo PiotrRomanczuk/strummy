@@ -2,15 +2,13 @@
  * User Repository Tests
  *
  * Tests for data access layer with focus on:
- * - Query sanitization (STRUMMY-282)
  * - Role-based access control
- * - Filter application
+ * - Filter application (search cleaning itself: lib/supabase/filter-pattern.test.ts)
  * - CRUD operations
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  sanitizeSearchQuery,
   buildUserQuery,
   applyUserFilters,
   getUserById,
@@ -77,52 +75,6 @@ const noRoleProfile: Profile = {
   isTeacher: false,
   isStudent: false,
 };
-
-// ============================================================================
-// SANITIZATION TESTS (STRUMMY-282 Fix)
-// ============================================================================
-
-describe('sanitizeSearchQuery', () => {
-  it('should remove PostgREST special characters', () => {
-    expect(sanitizeSearchQuery('test%query')).toBe('testquery');
-    expect(sanitizeSearchQuery('test_query')).toBe('testquery');
-    expect(sanitizeSearchQuery('test*query')).toBe('testquery');
-    expect(sanitizeSearchQuery('test(query)')).toBe('testquery');
-    expect(sanitizeSearchQuery('test.query,')).toBe('testquery');
-  });
-
-  it('should handle injection attempts', () => {
-    // Attempt to inject OR condition
-    expect(sanitizeSearchQuery('%OR%1=1')).toBe('OR11');
-
-    // Attempt to inject wildcards
-    expect(sanitizeSearchQuery('%%admin%%')).toBe('admin');
-
-    // Attempt to inject parentheses
-    expect(sanitizeSearchQuery('(admin)')).toBe('admin');
-  });
-
-  it('should limit query length to 100 characters', () => {
-    const longQuery = 'a'.repeat(150);
-    const sanitized = sanitizeSearchQuery(longQuery);
-    expect(sanitized.length).toBe(100);
-  });
-
-  it('should trim whitespace', () => {
-    expect(sanitizeSearchQuery('  test  ')).toBe('test');
-  });
-
-  it('should handle empty input', () => {
-    expect(sanitizeSearchQuery('')).toBe('');
-    expect(sanitizeSearchQuery('   ')).toBe('');
-  });
-
-  it('should preserve safe characters', () => {
-    expect(sanitizeSearchQuery('John Doe')).toBe('John Doe');
-    expect(sanitizeSearchQuery('test@example.com')).toBe('test@examplecom'); // . removed
-    expect(sanitizeSearchQuery('user-123')).toBe('user-123');
-  });
-});
 
 // ============================================================================
 // QUERY BUILDER TESTS

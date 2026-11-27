@@ -1,15 +1,14 @@
 /**
  * Unit tests for song search route — PostgREST filter injection fix (KAN-17)
  *
- * Tests:
- * 1. sanitizePostgrestFilter strips all PostgREST structural characters
- * 2. Normal alphanumeric queries pass through unchanged
- * 3. The GET handler calls .or() with the sanitized value
- * 4. A pure-injection input (only special chars) skips the .or() call entirely
+ * The cleaning itself (`cleanSearchTerm`) is tested in
+ * lib/supabase/filter-pattern.test.ts. Here:
+ * 1. The GET handler calls .or() with the cleaned value
+ * 2. A pure-injection input (only special chars) skips the .or() call entirely
  */
 
 import { NextRequest } from 'next/server';
-import { sanitizePostgrestFilter, GET } from '@/app/api/song/search/route';
+import { GET } from '@/app/api/song/search/route';
 import { createClient } from '@/lib/supabase/server';
 import type { AuthedProfile } from '@/lib/auth/loadAuthedProfile';
 
@@ -44,59 +43,6 @@ const TEACHER_PROFILE: AuthedProfile = {
   roles: { isAdmin: false, isTeacher: true, isStudent: false },
   flags: { isParent: false, isDevelopment: false },
 };
-
-// ---------------------------------------------------------------------------
-// Pure unit tests for the sanitizer helper
-// ---------------------------------------------------------------------------
-
-describe('sanitizePostgrestFilter', () => {
-  it('returns an unchanged string when input has no special chars', () => {
-    expect(sanitizePostgrestFilter('hello world')).toBe('hello world');
-  });
-
-  it('strips commas that could split the or() clause', () => {
-    expect(sanitizePostgrestFilter('a,b')).toBe('ab');
-  });
-
-  it('strips dots that are the field/operator separator in PostgREST', () => {
-    expect(sanitizePostgrestFilter('a.b.c')).toBe('abc');
-  });
-
-  it('strips colons used in PostgREST filter syntax', () => {
-    expect(sanitizePostgrestFilter('key:value')).toBe('keyvalue');
-  });
-
-  it('strips parentheses used for PostgREST grouping', () => {
-    expect(sanitizePostgrestFilter('(nested)')).toBe('nested');
-  });
-
-  it('strips percent signs to prevent wildcard injection', () => {
-    expect(sanitizePostgrestFilter('%secret%')).toBe('secret');
-  });
-
-  it('strips a known injection payload: %25,title.eq.secret', () => {
-    // URL-decoded form of a common PostgREST injection attempt
-    const malicious = '%,title.eq.secret';
-    const result = sanitizePostgrestFilter(malicious);
-    // All structural chars removed — what remains is just letters
-    expect(result).toBe('titleeqsecret');
-    expect(result).not.toContain(',');
-    expect(result).not.toContain('.');
-    expect(result).not.toContain('%');
-  });
-
-  it('handles an empty string without throwing', () => {
-    expect(sanitizePostgrestFilter('')).toBe('');
-  });
-
-  it('preserves alphanumeric characters and spaces', () => {
-    expect(sanitizePostgrestFilter('Bohemian Rhapsody 2')).toBe('Bohemian Rhapsody 2');
-  });
-
-  it('preserves hyphens and underscores (not structural in PostgREST)', () => {
-    expect(sanitizePostgrestFilter('my-song_title')).toBe('my-song_title');
-  });
-});
 
 // ---------------------------------------------------------------------------
 // Integration-style tests for the GET handler (mocked Supabase)
@@ -165,21 +111,20 @@ describe('GET /api/song/search', () => {
   });
 
   it('sanitizes special chars before building the PostgREST filter', async () => {
-    // Injection attempt: user supplies a value with commas and dots to break
-    // the or() filter structure
+    // Injection attempt: a comma would start a condition of its own
     const req = new NextRequest('http://localhost/api/song/search?q=rock%2Ctitle.eq.admin');
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    // The .or() must be called with the sanitized value — no comma or dot
+    // No comma left: the dots stay inside the ilike value, where they are text
     expect(mockSupabase.or).toHaveBeenCalledWith(
-      'title.ilike.%rocktitleeqadmin%,author.ilike.%rocktitleeqadmin%,chords.ilike.%rocktitleeqadmin%'
+      'title.ilike.%rocktitle.eq.admin%,author.ilike.%rocktitle.eq.admin%,chords.ilike.%rocktitle.eq.admin%'
     );
   });
 
   it('skips the .or() call entirely when the sanitized query is empty', async () => {
     // Input consists solely of special chars — after sanitization it's empty
-    const req = new NextRequest('http://localhost/api/song/search?q=%25%2C.');
+    const req = new NextRequest('http://localhost/api/song/search?q=%25%2C()');
     const res = await GET(req);
 
     expect(res.status).toBe(200);

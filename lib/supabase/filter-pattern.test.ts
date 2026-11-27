@@ -1,4 +1,30 @@
-import { containsPattern, participantFilter } from './filter-pattern';
+import { cleanSearchTerm, containsPattern, participantFilter } from './filter-pattern';
+
+describe('cleanSearchTerm', () => {
+  it('keeps an ordinary search as it is', () => {
+    expect(cleanSearchTerm('John Doe')).toBe('John Doe');
+    expect(cleanSearchTerm('user-123')).toBe('user-123');
+    expect(cleanSearchTerm('test@example.com')).toBe('test@example.com');
+  });
+
+  it('removes characters that structure an or() filter', () => {
+    expect(cleanSearchTerm('rock,title.eq.admin')).toBe('rocktitle.eq.admin');
+    expect(cleanSearchTerm('(admin)')).toBe('admin');
+    expect(cleanSearchTerm('a"b\\c')).toBe('abc');
+  });
+
+  it('removes LIKE wildcards, including the * alias', () => {
+    expect(cleanSearchTerm('%%admin%%')).toBe('admin');
+    expect(cleanSearchTerm('test_query*')).toBe('testquery');
+  });
+
+  it('trims, caps the length and returns empty when nothing is left', () => {
+    expect(cleanSearchTerm('  test  ')).toBe('test');
+    expect(cleanSearchTerm('a'.repeat(150))).toHaveLength(100);
+    expect(cleanSearchTerm('%,()')).toBe('');
+    expect(cleanSearchTerm('   ')).toBe('');
+  });
+});
 
 describe('containsPattern', () => {
   it('wraps a plain search in LIKE wildcards', () => {
