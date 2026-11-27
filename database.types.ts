@@ -6027,6 +6027,13 @@ export type Database = {
         Args: { p_identifier: string; p_operation: string; p_window_ms: number }
         Returns: number
       }
+      child_teacher_names: {
+        Args: { p_child_id: string }
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       cleanup_auth_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_in_app_notifications: { Args: never; Returns: number }
       create_audit_log_partition: {

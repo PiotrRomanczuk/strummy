@@ -3718,6 +3718,8 @@
     "practiceSome": "Practice logged",
     "practiceToday": "Today",
     "practiceYesterday": "Yesterday",
+    "minutesUnit": "min",
+    "childSwitcherLabel": "Your children",
     "homeworkEyebrow": "Practice",
     "homeworkTitle": "Homework",
     "homeworkEmpty": "No homework from the teacher yet.",

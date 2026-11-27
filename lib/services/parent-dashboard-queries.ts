@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import {
   getStudentPreferences,
@@ -26,6 +25,7 @@ import {
   type ParentAssignment,
   type ParentPastLesson,
 } from './parent-child-activity-queries';
+import { withChildTeacherNames } from './parent-teacher-names-queries';
 
 export type ParentChild = {
   id: string;
@@ -115,7 +115,7 @@ export async function getParentChildOverview(
       getChildAssignments(childId, now),
       getChildPastLessons(childId, now),
     ]);
-  const { lessons, note } = await withTeacherNames(upcoming, latest);
+  const { lessons, note } = await withChildTeacherNames(childId, upcoming, latest);
 
   return {
     id: profile.id,
@@ -137,47 +137,4 @@ export async function getParentChildOverview(
       status: row.status,
     })),
   };
-}
-
-type Named = { teacherId: string | null; teacherName: string | null };
-
-/** Upcoming lessons and the latest note with the teacher's name the parent could not read. */
-async function withTeacherNames<L extends Named, N extends Named>(
-  lessons: L[],
-  note: N | null
-): Promise<{ lessons: L[]; note: N | null }> {
-  const names = await getTeacherNames([
-    ...lessons.map((l) => l.teacherId),
-    note?.teacherId ?? null,
-  ]);
-  const fill = <T extends Named>(row: T): T => ({
-    ...row,
-    teacherName: row.teacherName ?? (row.teacherId ? (names.get(row.teacherId) ?? null) : null),
-  });
-  return { lessons: lessons.map(fill), note: note ? fill(note) : null };
-}
-
-/**
- * Names of the child's teachers. RLS gives a parent the child's lessons but not
- * the teachers' profiles, so the lesson's teacher came back empty and the
- * dashboard showed no teacher at all. The ids come from lessons the parent can
- * already read; only `full_name` leaves this function.
- */
-async function getTeacherNames(ids: Array<string | null>): Promise<Map<string, string>> {
-  const unique = [...new Set(ids.filter((id): id is string => Boolean(id)))];
-  if (unique.length === 0) return new Map();
-  const { data, error } = await createAdminClient()
-    .from('profiles')
-    .select('id, full_name')
-    .in('id', unique)
-    .eq('is_teacher', true);
-  if (error) {
-    logger.warn('[parent-dashboard] teacher names error', { error: error.message });
-    return new Map();
-  }
-  return new Map(
-    (data ?? [])
-      .filter((row) => row.full_name)
-      .map((row) => [row.id as string, row.full_name as string])
-  );
 }

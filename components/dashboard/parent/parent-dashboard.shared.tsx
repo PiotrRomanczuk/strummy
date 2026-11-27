@@ -130,7 +130,14 @@ export const formatLessonDate = (
   };
 };
 
-export const formatNoteDate = (iso: string, locale: string): string =>
+/** Short weekday of a practice day key (`YYYY-MM-DD`, a UTC calendar day) in the viewer's language. */
+export const formatPracticeWeekday = (dayKey: string, locale: string): string =>
+  new Date(`${dayKey}T12:00:00Z`).toLocaleDateString(intlLocale(locale), {
+    weekday: 'short',
+    timeZone: 'UTC',
+  });
+
+export const formatNoteDate =(iso: string, locale: string): string =>
   new Date(iso).toLocaleDateString(intlLocale(locale), {
     month: 'short',
     day: 'numeric',

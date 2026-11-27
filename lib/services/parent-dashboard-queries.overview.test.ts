@@ -1,35 +1,26 @@
 /**
  * getParentChildOverview: the parent's view of one child. RLS lets a parent
  * read the child's lessons but not the teacher's profile, so the teacher's
- * name is filled in separately — only the name, only for those lessons.
+ * name is filled in separately through the child_teacher_names RPC, as the
+ * parent — only the name, only for the child's own teachers.
  */
 
 import { getParentChildOverview } from './parent-dashboard-queries';
 
 jest.mock('@/lib/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn() } }));
-jest.mock('@/lib/supabase/server', () => ({ createClient: jest.fn() }));
-
-const mockIn = jest.fn();
-const mockEq = jest.fn();
-let teacherRows: Array<{ id: string; full_name: string | null }>;
-jest.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({
-    from: () => {
-      const chain: Record<string, unknown> = {
-        select: () => chain,
-        in: (column: string, ids: string[]) => {
-          mockIn(column, ids);
-          return chain;
-        },
-        eq: (column: string, value: unknown) => {
-          mockEq(column, value);
-          return Promise.resolve({ data: teacherRows, error: null });
-        },
-      };
-      return chain;
+const mockRpc = jest.fn();
+let teacherRows: Array<{ id: string; full_name: string }>;
+let rpcError: { message: string } | null;
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({
+    rpc: (name: string, args: unknown) => {
+      mockRpc(name, args);
+      return Promise.resolve({ data: rpcError ? null : teacherRows, error: rpcError });
     },
   }),
 }));
+const mockAdminClient = jest.fn();
+jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => mockAdminClient() }));
 
 jest.mock('./parent-child-activity-queries', () => ({
   getChildAssignments: jest.fn().mockResolvedValue([]),
@@ -64,6 +55,7 @@ jest.mock('./parent-health-queries', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   teacherRows = [{ id: 't1', full_name: 'Dana Ross' }];
+  rpcError = null;
   mockUpcoming.mockResolvedValue([lesson('l1', 't1'), lesson('l2', 't1')]);
   mockLatestNote.mockResolvedValue({
     lessonId: 'l0',
@@ -82,22 +74,33 @@ describe('getParentChildOverview', () => {
     expect(child?.latestNote?.teacherName).toBe('Dana Ross');
   });
 
-  it("asks only for the teachers of the child's own lessons, and only teachers", async () => {
+  it("asks the parent's own session for this child's teacher names, never the service role", async () => {
     await getParentChildOverview('child-1');
-    expect(mockIn).toHaveBeenCalledWith('id', ['t1']);
-    expect(mockEq).toHaveBeenCalledWith('is_teacher', true);
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    expect(mockRpc).toHaveBeenCalledWith('child_teacher_names', { p_child_id: 'child-1' });
+    expect(mockAdminClient).not.toHaveBeenCalled();
   });
 
   it('makes no lookup when there are no lessons and no note', async () => {
     mockUpcoming.mockResolvedValue([]);
     mockLatestNote.mockResolvedValue(null);
     const child = await getParentChildOverview('child-1');
-    expect(mockIn).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
     expect(child?.teacherName).toBeNull();
   });
 
-  it('keeps going without a name when the lookup finds none', async () => {
+  it('makes no lookup when every name is already known', async () => {
+    mockUpcoming.mockResolvedValue([{ ...lesson('l1', 't1'), teacherName: 'Dana Ross' }]);
+    mockLatestNote.mockResolvedValue(null);
+    const child = await getParentChildOverview('child-1');
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(child?.teacherName).toBe('Dana Ross');
+  });
+
+  it('keeps going without a name when the lookup finds none or fails', async () => {
     teacherRows = [];
+    expect((await getParentChildOverview('child-1'))?.teacherName).toBeNull();
+    rpcError = { message: 'boom' };
     const child = await getParentChildOverview('child-1');
     expect(child?.teacherName).toBeNull();
     expect(child?.upcomingLessons).toHaveLength(2);

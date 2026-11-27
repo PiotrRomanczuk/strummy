@@ -1,22 +1,23 @@
 import { Check, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { PracticeDay, PracticeWeek } from '@/lib/services/parent-health.helpers';
 import { formatPracticeMinutes } from '@/lib/services/parent-health.helpers';
 
 import { Card } from '../DashboardPrimitives';
-import { Badge, SectionLabel } from './parent-dashboard.shared';
+import { Badge, formatPracticeWeekday, SectionLabel } from './parent-dashboard.shared';
 
 const relativeLabel = (
-  day: PracticeDay,
+  weekday: string,
   indexFromNewest: number,
   t: (key: 'practiceToday' | 'practiceYesterday') => string
 ): string => {
   if (indexFromNewest === 0) return t('practiceToday');
   if (indexFromNewest === 1) return t('practiceYesterday');
-  return day.label;
+  return weekday;
 };
 
 const PracticeBars = ({ days, goalPerDay }: { days: PracticeDay[]; goalPerDay: number }) => {
+  const locale = useLocale();
   const max = Math.max(goalPerDay, ...days.map((d) => d.minutes), 1);
   return (
     <div
@@ -50,7 +51,7 @@ const PracticeBars = ({ days, goalPerDay }: { days: PracticeDay[]; goalPerDay: n
             />
           </div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-4)' }}>
-            {d.label}
+            {formatPracticeWeekday(d.date, locale)}
           </div>
         </div>
       ))}
@@ -60,6 +61,7 @@ const PracticeBars = ({ days, goalPerDay }: { days: PracticeDay[]; goalPerDay: n
 
 export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: PracticeWeek }) => {
   const t = useTranslations('ParentHome');
+  const locale = useLocale();
   const newestFirst = days.slice().reverse();
   return (
     <Card>
@@ -147,7 +149,7 @@ export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: 
                     : t('practiceSome')}
               </div>
               <SectionLabel style={{ marginTop: 2, letterSpacing: '.08em' }}>
-                {relativeLabel(d, i, t)}
+                {relativeLabel(formatPracticeWeekday(d.date, locale), i, t)}
               </SectionLabel>
             </div>
             <span
@@ -159,7 +161,7 @@ export const ParentPracticeCard = ({ days, week }: { days: PracticeDay[]; week: 
               }}
             >
               {d.minutes}
-              <span style={{ fontSize: 12, color: 'var(--ink-4)' }}> min</span>
+              <span className="text-xs text-[var(--ink-4)]"> {t('minutesUnit')}</span>
             </span>
           </div>
         ))}
