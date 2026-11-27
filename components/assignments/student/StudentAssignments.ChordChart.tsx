@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { ChordDiagram } from '@/components/skills/chord-quiz/ChordDiagram';
 import { DesignCard, DesignCardBody, DesignCardHeader } from '@/components/shared/DesignCard';
+import { voicingForChord } from '@/lib/music-theory/chord-voicing-lookup';
 import { CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
 
 /** "Reference / Chord chart" — the drill's chords, else the song's, as diagrams. */
@@ -17,8 +18,8 @@ export const StudentChordChart = async ({
   const fromSong = (songChords ?? '')
     .split(/[,\s]+/)
     .filter(Boolean)
-    .map((name) => CHORD_VOICINGS.find((v) => v.name.toLowerCase() === name.toLowerCase()))
-    .filter(Boolean);
+    .map(voicingForChord)
+    .filter((v, i, all) => v && all.findIndex((other) => other?.id === v.id) === i);
   const voicings = (fromDrill.length > 0 ? fromDrill : fromSong).slice(0, 6);
   if (voicings.length === 0) return null;
   return (

@@ -12,9 +12,14 @@ describe('chordNotes', () => {
     expect(chordNotes('Am')).toEqual([45, 52, 57, 60, 64]);
   });
 
+  it('strums the shape the shared lookup finds: barres, enharmonics, folded extensions', () => {
+    expect(chordNotes('Bb')).toEqual([46, 53, 58, 62, 65]);
+    expect(chordNotes('A#')).toEqual(chordNotes('Bb'));
+    expect(chordNotes('Ebm7')).toEqual(chordNotes('Ebm'));
+  });
+
   it('falls back to a triad for a chord without a stored shape', () => {
-    expect(chordNotes('Bb')).toEqual([58, 62, 65, 70]);
-    expect(chordNotes('Ebm7')).toEqual([51, 54, 58, 63]);
+    expect(chordNotes('Bbm7b5')).toEqual([58, 61, 65, 70]);
   });
 
   it('plays nothing for no chord or a name it cannot read', () => {
