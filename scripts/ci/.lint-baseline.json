@@ -1,0 +1,19 @@
+{
+  "total": 813,
+  "rules": {
+    "(no rule)": 2,
+    "@next/next/no-img-element": 1,
+    "@next/next/no-location-assign-relative-destination": 3,
+    "@next/next/no-page-custom-font": 1,
+    "@typescript-eslint/no-unused-vars": 21,
+    "max-lines": 115,
+    "max-lines-per-function": 651,
+    "no-console": 2,
+    "no-restricted-syntax": 2,
+    "react-hooks/exhaustive-deps": 2,
+    "react-hooks/immutability": 2,
+    "react-hooks/purity": 1,
+    "react-hooks/refs": 2,
+    "react-hooks/set-state-in-effect": 8
+  }
+}

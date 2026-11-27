@@ -34,6 +34,7 @@
     "quality": "./scripts/ci/quality-check.sh",
     "check:structure": "bash scripts/ci/check-structure.sh",
     "check:structure:strict": "bash scripts/ci/check-structure.sh --strict",
+    "check:lint-baseline": "node scripts/ci/check-lint-baseline.mjs",
     "db:quality": "./scripts/database/maintenance/check-db-quality.sh",
     "seed": "./scripts/database/seeding/local/seed-db.sh",
     "seed:demo": "npx tsx scripts/database/seeding/demo/seed-demo.ts",

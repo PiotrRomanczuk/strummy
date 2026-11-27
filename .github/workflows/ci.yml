@@ -151,6 +151,16 @@ jobs:
         id: structure
         run: npm run check:structure:strict
 
+      # Warnings never fail `npm run lint`, so their count is held here
+      # (structure.md S9, #1218): any rule with more warnings than
+      # scripts/ci/.lint-baseline.json fails the job. Reuses the .eslintcache
+      # the lint step above just wrote, so it costs about a second. Fixed
+      # warnings: lower the baseline with
+      # `npm run check:lint-baseline -- --update-baseline`.
+      - name: Lint warning ratchet
+        id: lint_ratchet
+        run: npm run check:lint-baseline
+
       # Do NOT add --testPathIgnorePatterns: the Jest CLI flag REPLACES the config
       # array rather than merging, which would wipe the quarantine list in
       # jest.config.ts and let rotted tests run. (--maxWorkers is a scalar
@@ -210,6 +220,7 @@ jobs:
             echo "|---|---|"
             echo "| Lint + type check | $(fmt '${{ steps.checks.outcome }}') |"
             echo "| Structure check | $(fmt '${{ steps.structure.outcome }}') |"
+            echo "| Lint warning ratchet | $(fmt '${{ steps.lint_ratchet.outcome }}') |"
             echo "| Unit + coverage | $(fmt '${{ steps.unit.outcome }}') |"
             echo "| Integration | $(fmt '${{ steps.integration.outcome }}') |"
             echo "| Build | $(fmt '${{ steps.build.outcome }}') |"

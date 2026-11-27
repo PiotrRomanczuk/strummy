@@ -182,7 +182,7 @@ remain visible on the PR.
 
 ## S9 — Warning counts ratchet; they never grow
 
-`npm run lint` emits ~295 warnings and 0 errors. A number that only rises is
+`npm run lint` emitted ~295 warnings and 0 errors (351 by 2026-11-27). A number that only rises is
 indistinguishable from no rule — which is how 53 files quietly passed a limit
 the docs called "Enforced".
 
@@ -194,7 +194,12 @@ big-bang pass. `check-structure.sh` works this way: pre-existing findings sit in
 within a week.
 
 **Enforced:** `check-structure.sh --strict` fails on any finding not in the
-baseline. Accept reviewed findings with `--update-baseline`.
+baseline. Accept reviewed findings with `--update-baseline`. ESLint warnings
+the same way since 2026-11-27 (#1218): `npm run check:lint-baseline` (CI step
+"Lint warning ratchet") fails when any rule has more warnings than
+`scripts/ci/.lint-baseline.json` (813 at the start, after the size limits were
+tightened to the documented 150/200/50). Lower it with `--update-baseline`,
+which refuses to raise anything.
 
 ---
 

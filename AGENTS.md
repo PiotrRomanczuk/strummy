@@ -63,12 +63,13 @@ Strummy is a student-management system for guitar teachers: profiles, lessons, s
 
 ## 4. Code conventions
 
-| Limit          | Value                            |
-| -------------- | -------------------------------- |
-| Component file | < 200 LOC                        |
-| Hook file      | < 150 LOC                        |
-| Any other file | < 150 LOC, single responsibility |
-| Function body  | < 50 LOC                         |
+| Limit                                 | Value                              |
+| ------------------------------------- | ---------------------------------- |
+| `.tsx` file (components, pages)       | ≤ 200 lines                        |
+| Any other file (hooks, `lib/`, `.ts`) | ≤ 150 lines, single responsibility |
+| Function body                         | ≤ 50 lines                         |
+
+Lines exclude blanks and comments; tests are exempt. `eslint.config.mjs` holds the same numbers, and the lint ratchet (`npm run check:lint-baseline`) fails CI on any warning over `scripts/ci/.lint-baseline.json` — details in `.claude/rules/code-style.md`.
 
 **File naming under `components/`** — exactly five shapes (`components/ui/` is the shadcn registry and is exempt):
 

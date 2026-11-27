@@ -65,14 +65,23 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // Project-wide rules and overrides
+  // Project-wide rules and overrides.
+  // Size limits — the ONE set, same numbers as .claude/rules/code-style.md and
+  // AGENTS.md (#1218): any file 150 lines, a .tsx file (components, pages) 200,
+  // a function body 50. Warnings, held by the lint ratchet
+  // (scripts/ci/check-lint-baseline.mjs): existing files over the limit are
+  // in the baseline, a new one fails CI. Splitting the old ones is #1066.
   {
     name: 'project/component-size-rules',
-    files: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}'],
+    files: [
+      'app/**/*.{ts,tsx}',
+      'components/**/*.{ts,tsx}',
+      'lib/**/*.{ts,tsx}',
+      'hooks/**/*.{ts,tsx}',
+    ],
     rules: {
-      // Enforce small, focused files (warn — many files still exceed this)
-      'max-lines': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['warn', { max: 80, skipBlankLines: true, IIFEs: true }],
+      'max-lines': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, IIFEs: true }],
       complexity: ['warn', { max: 50 }],
       'max-depth': ['warn', 10],
       // Ban explicit 'any' — use unknown or a proper type. Suppressible per-site
@@ -81,6 +90,13 @@ const eslintConfig = defineConfig([
       // ADR 0003 §6: route operational logs through @/lib/logger. console.warn/error
       // remain allowed for genuine fallback paths and dev tooling output.
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    name: 'project/component-file-size',
+    files: ['app/**/*.tsx', 'components/**/*.tsx', 'lib/**/*.tsx', 'hooks/**/*.tsx'],
+    rules: {
+      'max-lines': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
     },
   },
   // Enforce API client and hydration safety standards
