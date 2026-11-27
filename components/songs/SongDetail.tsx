@@ -20,6 +20,7 @@ import { SongNotesCard } from './SongNotesCard';
 import { SongTabsCard } from './SongTabsCard';
 import { SongMapCard } from './SongMapCard';
 import { SongTechniquesCard } from './SongTechniquesCard';
+import { SongExercisesCard } from './SongExercisesCard';
 import { SongTranscriptionCard } from './SongTranscriptionCard';
 import { SongResourcesCard } from './SongResourcesCard';
 import ProductionTab from '@/components/songs/production/ProductionTab';
@@ -146,6 +147,7 @@ export const SongDetail = async ({
             <UsageCard stats={stats} />
             <QuickAssignCard songId={song.id} students={students} />
             <LearnersCard learners={learners} />
+            <SongExercisesCard songId={song.id} />
           </>
         ) : (
           <YourProgressCard entry={viewerEntry} songId={song.id} canPick={canPickToLearn} />

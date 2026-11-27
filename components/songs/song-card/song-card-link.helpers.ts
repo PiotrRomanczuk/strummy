@@ -1,4 +1,5 @@
 import type { SongCard } from '@/lib/music-theory/song-card';
+import { isPracticeTempo } from '@/schemas/PracticeTempoSchema';
 
 /** What the card plays: the embedded recording or the backing track. */
 export type CardSource = 'recording' | 'backing';
@@ -18,8 +19,6 @@ export interface CardStart {
 
 export const PRACTICE_RATES = [0.5, 0.6, 0.75, 0.9, 1] as const;
 const MIN_RATE = 0.5;
-/** A link may ask for a backing-track tempo below the player's half speed. */
-const MIN_LINK_RATE = 0.4;
 
 const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
@@ -29,9 +28,9 @@ export function parseCardStart(
 ): CardStart {
   const n = Number(one(params.part));
   const part = card?.parts.findIndex((p) => p.n === n) ?? -1;
+  // A link may ask for a backing-track tempo below the player's half speed (PRACTICE_TEMPO_MIN).
   const tempo = Number(one(params.tempo));
-  const rate =
-    Number.isFinite(tempo) && tempo >= MIN_LINK_RATE * 100 && tempo <= 100 ? tempo / 100 : 1;
+  const rate = isPracticeTempo(tempo) ? tempo / 100 : 1;
   return {
     part: part >= 0 ? part : null,
     isLooping: part >= 0 && one(params.loop) === '1',
