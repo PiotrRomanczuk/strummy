@@ -2,8 +2,9 @@ import { getTranslations } from 'next-intl/server';
 
 import type { ChordShape } from '@/lib/music-theory/chord-shape';
 
+import { ChordGrid } from './ChordGrid';
 import { SongChordsCardNewForYou } from './SongChordsCard.NewForYou';
-import { Card, CardHeader, ChordGrid } from './SongPrimitives';
+import { Card, CardHeader } from './SongPrimitives';
 
 type Props = {
   title: string;

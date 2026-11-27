@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import { CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
+import { voicingForChord } from '@/lib/music-theory/chord-voicing-lookup';
 import type { SongCard } from '@/lib/music-theory/song-card';
 import {
   chordAt,
@@ -23,8 +23,6 @@ type Props = {
   /** The part's chords are not approved yet: a student sees them greyed. */
   isUnsure?: boolean;
 };
-
-const voicingOf = (chord: string) => CHORD_VOICINGS.find((voicing) => voicing.name === chord);
 
 /** What sounds now: the chord in large, the next one and how far away it is, the shapes of the part's chords. */
 export const SongCardNow = ({ card, position, edits = {}, isUnsure = false }: Props) => {
@@ -62,7 +60,7 @@ export const SongCardNow = ({ card, position, edits = {}, isUnsure = false }: Pr
         className="grid grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-2"
       >
         {shapes.map((chord) => {
-          const voicing = voicingOf(chord);
+          const voicing = voicingForChord(chord);
           return (
             <li
               key={chord}
@@ -74,7 +72,13 @@ export const SongCardNow = ({ card, position, edits = {}, isUnsure = false }: Pr
               }`}
             >
               {voicing ? (
-                <ChordDiagram voicing={voicing} size="sm" />
+                <>
+                  {/* A folded chord ("Em7/D" drawn as Em7) keeps its written name above the shape's. */}
+                  {voicing.name !== chord && (
+                    <span className="font-serif text-lg font-semibold">{chord}</span>
+                  )}
+                  <ChordDiagram voicing={voicing} size="sm" />
+                </>
               ) : (
                 <>
                   <span className="font-serif text-lg font-semibold">{chord}</span>

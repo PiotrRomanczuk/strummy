@@ -1,4 +1,4 @@
-import { CHORD_VOICINGS } from './chord-voicings';
+import { voicingForChord } from './chord-voicing-lookup';
 import { NO_CHORD, type SongCard } from './song-card';
 import { SLOTS_PER_BAR } from './song-card-clock';
 
@@ -34,7 +34,7 @@ const CHORD_NAME = /^([A-G][#b]?)(m(?!aj))?/;
 /** The strings of the card's chord shape, low to high; a plain triad near the guitar's range when there is none. */
 export function chordNotes(chord: string): number[] {
   if (chord === NO_CHORD) return [];
-  const voicing = CHORD_VOICINGS.find((v) => v.name === chord);
+  const voicing = voicingForChord(chord);
   if (voicing) {
     return voicing.frets.flatMap((fret, string) =>
       fret === null ? [] : [OPEN_STRINGS[string] + fret]

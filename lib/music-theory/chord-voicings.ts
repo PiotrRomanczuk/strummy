@@ -1,3 +1,4 @@
+import { SONG_VOICINGS } from './chord-voicings-songs';
 import { type NoteName } from './notes';
 
 /**
@@ -30,9 +31,9 @@ export interface ChordVoicing {
 
 /**
  * 30 voicings: open chords + a few barre + common 7ths.
- * Hand-curated, validated by chord-voicings.unit.test.ts against getChordNotes().
+ * Hand-curated, validated by chord-voicings.test.ts against getChordNotes().
  */
-export const CHORD_VOICINGS: ReadonlyArray<ChordVoicing> = [
+const CURATED_VOICINGS: ReadonlyArray<ChordVoicing> = [
   // --- Open major chords ---
   {
     id: 'C-open',
@@ -321,6 +322,9 @@ export const CHORD_VOICINGS: ReadonlyArray<ChordVoicing> = [
     barre: { fret: 4, fromString: 0, toString: 5 },
   },
 ];
+
+/** Every voicing the app draws; `SONG_VOICINGS` covers the chords songs use (#1240). */
+export const CHORD_VOICINGS: ReadonlyArray<ChordVoicing> = [...CURATED_VOICINGS, ...SONG_VOICINGS];
 
 export type ChordVoicingId = (typeof CHORD_VOICINGS)[number]['id'];
 

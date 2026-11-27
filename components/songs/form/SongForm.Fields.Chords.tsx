@@ -2,12 +2,8 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ALL_CHORD_NAMES, CHORD_VOICINGS } from '@/lib/music-theory/chord-voicings';
+import { ALL_CHORD_NAMES } from '@/lib/music-theory/chord-voicings';
 import { songChipBox } from './song-form.styles';
-
-/** Chord name text → the diagram to preview, when the app recognizes it. */
-export const voicingForChordName = (name: string) =>
-  CHORD_VOICINGS.find((v) => v.name.toLowerCase() === name.trim().toLowerCase());
 
 /** Parses the DB's comma-separated `chords` string into a chip list. */
 export const parseChordsString = (chords: string): string[] =>
